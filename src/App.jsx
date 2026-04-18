@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { LiquidGlass } from "@liquidglass/react";
 import { ChevronLeft, ChevronRight, Settings, Trash2 } from "lucide-react";
+import { AnimatedCircularProgressBar } from "./components/ui/animated-circular-progress-bar";
+import GradientBackground from "./components/ui/gradient-background";
 import "./styles.css";
 
 const STORAGE_KEYS = {
@@ -8,6 +11,10 @@ const STORAGE_KEYS = {
 };
 
 const POMODORO_SECONDS = 25 * 60;
+
+function cn(...values) {
+  return values.filter(Boolean).join(" ");
+}
 
 function readStoredItems(key) {
   try {
@@ -154,6 +161,55 @@ function MiniChart({ data }) {
   );
 }
 
+function GlassCard({ className = "", children }) {
+  return (
+    <LiquidGlass
+      borderRadius={8}
+      blur={2.4}
+      contrast={1.28}
+      brightness={1.16}
+      saturation={1.35}
+      shadowIntensity={0.28}
+      displacementScale={1.6}
+      className={`liquid-card ${className}`}
+    >
+      {children}
+    </LiquidGlass>
+  );
+}
+
+function GlassCardHeader({ className = "", children }) {
+  return <div className={cn("glass-card-header", className)}>{children}</div>;
+}
+
+function GlassCardTitle({ className = "", children }) {
+  return <h3 className={cn("glass-card-title", className)}>{children}</h3>;
+}
+
+function GlassCardDescription({ className = "", children }) {
+  return <p className={cn("glass-card-description", className)}>{children}</p>;
+}
+
+function GlassCardContent({ className = "", children }) {
+  return <div className={cn("glass-card-content", className)}>{children}</div>;
+}
+
+function GlassCardFooter({ className = "", children }) {
+  return <div className={cn("glass-card-footer", className)}>{children}</div>;
+}
+
+function GlassButton({ className = "", variant = "primary", type = "button", children, ...props }) {
+  return (
+    <button
+      type={type}
+      className={cn("glass-button", `glass-button-${variant}`, className)}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function App() {
   const [tasks, setTasks] = useStoredList(STORAGE_KEYS.tasks);
   const [sessions, setSessions] = useStoredList(STORAGE_KEYS.sessions);
@@ -185,6 +241,7 @@ export default function App() {
     .map((task) => ({ label: task.text, value: task.focusSeconds ?? 0 }))
     .sort((firstTask, secondTask) => secondTask.value - firstTask.value);
   const selectedSessionIndex = sessions.findIndex((session) => session.id === selectedSessionId);
+  const timerProgress = POMODORO_SECONDS - timerSeconds;
   const taskHistorySession = selectedSession?.id !== activeSessionId ? selectedSession : null;
   const taskListSession = selectedSession ?? activeSession;
   const isViewingTaskHistory = Boolean(taskHistorySession);
@@ -446,6 +503,7 @@ export default function App() {
 
   return (
     <main className="app-shell" aria-label="Pomodoro dashboard">
+      <GradientBackground />
       <header className="top-menu" aria-label="Main menu">
         <div className="menu-title">Pomodoro</div>
         <div className="settings-area">
@@ -492,42 +550,55 @@ export default function App() {
       ) : null}
       <section className="board" aria-label="Pomodoro board frame">
         <div className="board-row board-row-top">
-          <section className="panel panel-small" aria-labelledby="timer-title">
+          <GlassCard className="panel-small">
+          <section className="panel" aria-labelledby="timer-title">
             <div className="panel-header">
               <h1 id="timer-title">Timer</h1>
             </div>
             <div className="timer-card" aria-live="polite">
-              <div className="timer-display">{formatTimer(timerSeconds)}</div>
-              <div className="timer-task">
-                <strong>{activeTask ? activeTask.text : "Choose a task"}</strong>
-              </div>
-              <div className="timer-spent">
-                Spent {formatSpentTime(activeTask?.focusSeconds)} on this task
-              </div>
+                <div className="timer-progress">
+                  <AnimatedCircularProgressBar
+                    max={POMODORO_SECONDS}
+                    min={0}
+                    value={timerProgress}
+                    gaugePrimaryColor="#faeb92"
+                    gaugeSecondaryColor="rgb(255 255 255 / 18%)"
+                    className="timer-progress-ring"
+                  />
+                  <div className="timer-display">{formatTimer(timerSeconds)}</div>
+                </div>
+                <div className="timer-task">
+                  <strong>{activeTask ? activeTask.text : "Choose a task"}</strong>
+                </div>
+                <div className="timer-spent">
+                  Spent {formatSpentTime(activeTask?.focusSeconds)} on this task
+                </div>
               <div className="timer-actions">
                 <button
                   type="button"
-                  onClick={() => setTimerRunning((isRunning) => !isRunning)}
-                  disabled={!activeTask || timerSeconds === 0}
-                >
-                  {timerRunning ? "Pause" : "Start"}
+                    onClick={() => setTimerRunning((isRunning) => !isRunning)}
+                    disabled={!activeTask || timerSeconds === 0}
+                  >
+                    {timerRunning ? "Pause" : "Start"}
                 </button>
                 <button type="button" onClick={resetTimer}>
-                  Reset
+                    Reset
                 </button>
               </div>
-              <div className="timer-status">
-                {timerSeconds === 0
-                  ? "Time for a break."
-                  : timerRunning
-                    ? "Focus is running."
-                    : activeTask
+                <div className="timer-status">
+                  {timerSeconds === 0
+                    ? "Time for a break."
+                    : timerRunning
+                      ? "Focus is running."
+                      : activeTask
                       ? "Ready to focus."
-                      : "Pick a task to start."}
-              </div>
+                        : "Pick a task to start."}
+                </div>
             </div>
           </section>
-          <section className="panel panel-wide" aria-labelledby="tasks-title">
+          </GlassCard>
+          <GlassCard className="panel-wide">
+          <section className="panel" aria-labelledby="tasks-title">
             <div className="panel-header">
               <h1 id="tasks-title">Tasks</h1>
             </div>
@@ -573,9 +644,11 @@ export default function App() {
               )}
             </ul>
           </section>
+          </GlassCard>
         </div>
         <div className="board-row board-row-bottom">
-          <section className="panel panel-half" aria-labelledby="sessions-title">
+          <GlassCard className="panel-half">
+          <section className="panel" aria-labelledby="sessions-title">
             <div className="panel-header">
               <h2 id="sessions-title">Sessions</h2>
             </div>
@@ -656,25 +729,28 @@ export default function App() {
               )}
             </div>
           </section>
-          <section className="panel panel-half" aria-labelledby="activity-title">
+          </GlassCard>
+          <GlassCard className="panel-half">
+          <section className="panel" aria-labelledby="activity-title">
             <div className="panel-header">
               <h2 id="activity-title">Charts</h2>
             </div>
             <div className="chart-grid">
-              <div className="chart-mini-card">
-                <MiniChart data={focusChartData} />
-              </div>
-              <div className="chart-mini-card chart-placeholder">
-                <span>Focus</span>
-              </div>
-              <div className="chart-mini-card chart-placeholder">
-                <span>Tasks</span>
-              </div>
-              <div className="chart-mini-card chart-placeholder">
-                <span>Sessions</span>
-              </div>
+                <div className="chart-mini-card">
+                  <MiniChart data={focusChartData} />
+                </div>
+                <div className="chart-mini-card chart-placeholder">
+                  <span>Focus</span>
+                </div>
+                <div className="chart-mini-card chart-placeholder">
+                  <span>Tasks</span>
+                </div>
+                <div className="chart-mini-card chart-placeholder">
+                  <span>Sessions</span>
+                </div>
             </div>
           </section>
+          </GlassCard>
         </div>
       </section>
     </main>
