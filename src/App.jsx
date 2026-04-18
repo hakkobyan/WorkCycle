@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { LiquidGlass } from "@liquidglass/react";
 import { ChevronLeft, ChevronRight, Settings, Trash2 } from "lucide-react";
 import { AnimatedCircularProgressBar } from "./components/ui/animated-circular-progress-bar";
+import { GlassCard as EinGlassCard } from "./components/ui/glass-card";
+import { GlassInput } from "./components/ui/glass-input";
 import GradientBackground from "./components/ui/gradient-background";
 import "./styles.css";
 
@@ -163,18 +164,11 @@ function MiniChart({ data }) {
 
 function GlassCard({ className = "", children }) {
   return (
-    <LiquidGlass
-      borderRadius={8}
-      blur={2.4}
-      contrast={1.28}
-      brightness={1.16}
-      saturation={1.35}
-      shadowIntensity={0.28}
-      displacementScale={1.6}
-      className={`liquid-card ${className}`}
-    >
-      {children}
-    </LiquidGlass>
+    <div className={cn("glass-card-frame", className)}>
+      <EinGlassCard glowEffect className="glass-card-shell">
+        {children}
+      </EinGlassCard>
+    </div>
   );
 }
 
@@ -504,27 +498,29 @@ export default function App() {
   return (
     <main className="app-shell" aria-label="Pomodoro dashboard">
       <GradientBackground />
-      <header className="top-menu" aria-label="Main menu">
-        <div className="menu-title">Pomodoro</div>
-        <div className="settings-area">
-          <button
-            className="settings-button"
-            type="button"
-            aria-label="Settings"
-            aria-expanded={settingsOpen}
-            aria-controls="settings-popup"
-            onClick={() => {
-              if (settingsOpen) {
-                closeSettings();
-              } else {
-                openSettings();
-              }
-            }}
-          >
-            <Settings aria-hidden="true" size={20} strokeWidth={2.5} />
-          </button>
-        </div>
-      </header>
+      <GlassCard className="top-menu-frame">
+        <header className="top-menu" aria-label="Main menu">
+          <div className="menu-title">Pomodoro</div>
+          <div className="settings-area">
+            <button
+              className="settings-button"
+              type="button"
+              aria-label="Settings"
+              aria-expanded={settingsOpen}
+              aria-controls="settings-popup"
+              onClick={() => {
+                if (settingsOpen) {
+                  closeSettings();
+                } else {
+                  openSettings();
+                }
+              }}
+            >
+              <Settings aria-hidden="true" size={20} strokeWidth={2.5} />
+            </button>
+          </div>
+        </header>
+      </GlassCard>
       {settingsOpen ? (
         <div
           className={`settings-overlay${settingsClosing ? " is-closing" : ""}`}
@@ -604,7 +600,8 @@ export default function App() {
             </div>
             <form className="entry-form" onSubmit={addTask}>
               <div className="entry-row">
-                <input
+                <GlassInput
+                  className="glass-input-control"
                   id="task-input"
                   type="text"
                   value={taskText}
@@ -653,7 +650,8 @@ export default function App() {
               <h2 id="sessions-title">Sessions</h2>
             </div>
             <form className="session-form" onSubmit={startNewSession}>
-              <input
+              <GlassInput
+                className="glass-input-control glass-input-control-session"
                 type="text"
                 value={sessionName}
                 onChange={(event) => setSessionName(event.target.value)}
