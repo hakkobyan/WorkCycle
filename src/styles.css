@@ -368,6 +368,12 @@ body {
   font-weight: 700;
 }
 
+.entry-row button:disabled,
+.entry-row input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .item-list {
   display: grid;
   min-height: 0;
@@ -1275,6 +1281,7 @@ body {
 
 .session-action,
 .session-stop,
+.session-continue,
 .session-list button {
   min-height: 36px;
   border: var(--glow-border) solid var(--glow-border-color);
@@ -1298,7 +1305,8 @@ body {
   padding: 0 12px;
 }
 
-.session-stop {
+.session-stop,
+.session-continue {
   width: min(100%, 180px);
   margin-top: 12px;
 }
@@ -1429,6 +1437,7 @@ body {
   gap: 6px;
   margin: 14px 0 0;
   padding: 0;
+  max-height: 104px;
   overflow: auto;
   list-style: none;
   scrollbar-width: none;
@@ -1439,7 +1448,7 @@ body {
 }
 
 .session-list li {
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(78px, auto) 34px;
   align-items: center;
 }
 
@@ -1449,7 +1458,9 @@ body {
 }
 
 .session-list button {
+  display: grid;
   min-height: 32px;
+  place-items: center;
   padding: 0 10px;
   font-size: 13px;
 }
@@ -1468,7 +1479,51 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  margin-top: 0;
+}
+
+.chart-tabs {
+  display: inline-flex;
+  width: fit-content;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
   margin-top: 22px;
+  margin-bottom: 10px;
+  padding: 4px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 10%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+
+.chart-tabs button {
+  min-height: 26px;
+  min-width: 94px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgb(255 255 255 / 62%);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.chart-tabs button.is-active {
+  background: rgb(255 255 255 / 16%);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    0 6px 14px rgb(0 0 0 / 10%);
+}
+
+.chart-tabs button:not(.is-active):hover {
+  background: rgb(255 255 255 / 7%);
+  color: rgb(255 255 255 / 82%);
 }
 
 .chart-grid-empty {
@@ -1513,6 +1568,153 @@ body {
 
 .chart-empty-card {
   min-height: 100%;
+}
+
+.weekly-chart {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+
+.weekly-chart-session {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  overflow: hidden;
+  color: rgb(255 255 255 / 76%);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.weekly-chart-session span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weekly-chart-session strong {
+  flex: 0 0 auto;
+  color: #ffffff;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+.weekly-chart-body {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.weekly-chart-scale {
+  display: grid;
+  align-content: space-between;
+  padding: 10px 0 28px;
+  color: rgb(255 255 255 / 54%);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.weekly-chart-plot {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  padding: 10px 4px 0;
+  background-image: linear-gradient(to bottom, rgb(255 255 255 / 9%) 1px, transparent 1px);
+  background-size: 100% 25%;
+}
+
+.weekly-chart-column {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.weekly-chart-track {
+  position: relative;
+  display: flex;
+  min-height: 86px;
+  align-items: end;
+}
+
+.weekly-chart-bar {
+  width: 100%;
+  min-height: 0;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(to bottom, #82dcff, rgb(94 145 255 / 48%));
+  box-shadow: 0 0 18px rgb(112 198 255 / 28%);
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    height 220ms ease,
+    transform 180ms ease;
+}
+
+.weekly-chart-column.is-active .weekly-chart-bar {
+  background: linear-gradient(to bottom, rgb(255 255 255 / 72%), rgb(130 220 255 / 46%));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 24%),
+    0 0 18px rgb(130 220 255 / 24%);
+  transform: scaleX(1.04);
+}
+
+.weekly-chart-column span {
+  padding-top: 4px;
+  overflow: hidden;
+  color: rgb(255 255 255 / 64%);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weekly-chart-column.is-active > span {
+  color: #ffffff;
+}
+
+.weekly-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgb(255 255 255 / 62%);
+  font-size: 13px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.weekly-chart-legend {
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.weekly-chart-legend span {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: #82dcff;
 }
 
 .chart-mini-card:hover::after {
@@ -2517,4 +2719,122 @@ body {
 .top-menu-frame .top-menu::before,
 .top-menu-frame .top-menu::after {
   content: none;
+}
+
+.entry-row input,
+.entry-row .input-wrapper,
+.session-form input,
+.session-form .input-wrapper,
+.item-list li,
+.session-summary > div,
+.session-summary-arrows button,
+.session-action,
+.session-stop,
+.session-continue,
+.chart-tabs,
+.chart-mini-card {
+  border-color: rgb(255 255 255 / 16%) !important;
+  background-color: rgb(255 255 255 / 7%) !important;
+  background-image:
+    radial-gradient(
+      calc(var(--glow-size) * 0.7) calc(var(--glow-size) * 0.7) at
+        calc(var(--x, 0) * 1px) calc(var(--y, 0) * 1px),
+      rgb(255 255 255 / 9%),
+      transparent 68%
+    ) !important;
+  background-attachment: fixed !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 12%),
+    inset 0 -1px 0 rgb(255 255 255 / 5%) !important;
+  backdrop-filter: blur(18px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(145%) !important;
+}
+
+.entry-row button,
+.settings-button,
+.timer-actions button,
+.item-list button,
+.session-summary-arrows button,
+.session-action,
+.session-stop,
+.session-continue,
+.chart-tabs button.is-active {
+  border-color: rgb(255 255 255 / 18%) !important;
+  background-color: rgb(255 255 255 / 10%) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%) !important;
+}
+
+.item-list li {
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+}
+
+.item-list li.is-session-task {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.item-list li.item-list-empty {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.item-list li.is-completed > span:first-child {
+  color: rgb(255 255 255 / 58%);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.task-checkbox {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  cursor: pointer;
+}
+
+.task-checkbox input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.task-checkbox span {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 8%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.task-checkbox span::after {
+  width: 8px;
+  height: 5px;
+  border-bottom: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  content: "";
+  opacity: 0;
+  transform: rotate(-45deg) translateY(-1px);
+  transition: opacity 160ms ease;
+}
+
+.task-checkbox input:checked + span {
+  border-color: rgb(255 255 255 / 42%);
+  background: rgb(255 255 255 / 18%);
+}
+
+.task-checkbox input:checked + span::after {
+  opacity: 1;
+}
+
+.task-checkbox input:disabled + span {
+  cursor: default;
+  opacity: 0.55;
 }

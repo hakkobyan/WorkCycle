@@ -43,6 +43,7 @@ function createItem(text, sessionId) {
     sessionId,
     createdAt: new Date().toISOString(),
     focusSeconds: 0,
+    completed: false,
   };
 }
 
@@ -85,6 +86,15 @@ function formatSessionDate(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatChartTick(minutes) {
+  if (minutes >= 60) {
+    const hours = minutes / 60;
+    return `${Number.isInteger(hours) ? hours : hours.toFixed(1)}h`;
+  }
+
+  return `${Math.round(minutes)}m`;
 }
 
 function MiniChart({ data }) {
@@ -157,6 +167,78 @@ function MiniChart({ data }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function WeeklyTimeSpentChart({ session }) {
+  const days = [
+    { short: "Mon", full: "Monday" },
+    { short: "Tue", full: "Tuesday" },
+    { short: "Wed", full: "Wednesday" },
+    { short: "Thu", full: "Thursday" },
+    { short: "Fri", full: "Friday" },
+    { short: "Sat", full: "Saturday" },
+    { short: "Sun", full: "Sunday" },
+  ];
+  const chartData = days.map((day) => ({ ...day, seconds: 0 }));
+  let sessionDayIndex = null;
+
+  if (session) {
+    const date = new Date(session.startedAt);
+
+    if (!Number.isNaN(date.getTime())) {
+      const dayIndex = (date.getDay() + 6) % 7;
+
+      sessionDayIndex = dayIndex;
+      chartData[dayIndex].seconds = session.durationSeconds ?? 0;
+    }
+  }
+
+  const sessionTitle = session ? session.name || formatSessionDate(session.startedAt) : "No session";
+  const sessionSeconds = session?.durationSeconds ?? 0;
+
+  const maxSeconds = Math.max(...chartData.map((item) => item.seconds), 60);
+  const maxMinutes = Math.max(1, Math.ceil(maxSeconds / 60));
+  const roundedMaxMinutes = Math.max(5, Math.ceil(maxMinutes / 5) * 5);
+  const scaleMaxSeconds = roundedMaxMinutes * 60;
+  const timeTicks = [roundedMaxMinutes, roundedMaxMinutes * 0.75, roundedMaxMinutes * 0.5, roundedMaxMinutes * 0.25];
+  const hasData = chartData.some((item) => item.seconds > 0);
+  const activeDay = sessionDayIndex;
+
+  return (
+    <div className="weekly-chart" aria-label="Time spent by day of week">
+      <div className="weekly-chart-session">
+        <span>{sessionTitle}</span>
+        <strong>{formatSpentTime(sessionSeconds)}</strong>
+      </div>
+      <div className="weekly-chart-body">
+        <div className="weekly-chart-scale" aria-hidden="true">
+          {timeTicks.map((tick) => (
+            <span key={tick}>{formatChartTick(tick)}</span>
+          ))}
+        </div>
+        <div className="weekly-chart-plot">
+          {chartData.map((item, index) => (
+            <div
+              className={`weekly-chart-column${activeDay === index ? " is-active" : ""}`}
+              key={item.short}
+            >
+              <div className="weekly-chart-track">
+                <div
+                  className="weekly-chart-bar"
+                  style={{
+                    height: hasData ? `${Math.max(8, (item.seconds / scaleMaxSeconds) * 100)}%` : "0%",
+                  }}
+                  title={`${item.full}: ${formatSpentTime(item.seconds)}`}
+                />
+              </div>
+              <span title={item.full}>{item.short}</span>
+            </div>
+          ))}
+          {!hasData ? <div className="weekly-chart-empty">No session time yet</div> : null}
+        </div>
       </div>
     </div>
   );
@@ -239,6 +321,7 @@ export default function App() {
   const taskHistorySession = selectedSession?.id !== activeSessionId ? selectedSession : null;
   const taskListSession = selectedSession ?? activeSession;
   const isViewingTaskHistory = Boolean(taskHistorySession);
+  const canEditTaskList = Boolean(taskListSession && taskListSession.id === activeSessionId);
   const visibleTasks = taskListSession
     ? [
         ...tasks
@@ -246,6 +329,7 @@ export default function App() {
           .map((task) => ({
           id: task.id,
           text: task.text,
+          completed: task.completed ?? false,
           displaySeconds:
             taskListSession.id === activeSessionId
               ? task.focusSeconds ?? 0
@@ -258,6 +342,7 @@ export default function App() {
           .map((task) => ({
             id: task.id,
             text: task.text,
+            completed: false,
             displaySeconds: task.seconds,
             isDeleted: true,
           }))
@@ -265,6 +350,7 @@ export default function App() {
       ]
     : tasks.map((task) => ({
         ...task,
+        completed: task.completed ?? false,
         displaySeconds: task.focusSeconds ?? 0,
         isDeleted: false,
       }));
@@ -341,6 +427,26 @@ export default function App() {
   }, [tasks]);
 
   useEffect(() => {
+    if (sessions.length === 0) {
+      if (selectedSessionId !== null) {
+        setSelectedSessionId(null);
+      }
+
+      return;
+    }
+
+    if (selectedSessionId && sessions.some((session) => session.id === selectedSessionId)) {
+      return;
+    }
+
+    const fallbackSession = activeSessionId
+      ? sessions.find((session) => session.id === activeSessionId)
+      : sessions[sessions.length - 1];
+
+    setSelectedSessionId(fallbackSession?.id ?? null);
+  }, [activeSessionId, selectedSessionId, sessions]);
+
+  useEffect(() => {
     const fallbackSessionId = activeSessionId ?? selectedSessionId;
 
     if (!fallbackSessionId || !tasks.some((task) => !task.sessionId)) {
@@ -410,7 +516,11 @@ export default function App() {
       return;
     }
 
-    setTasks((currentTasks) => [...currentTasks, createItem(text, taskListSession?.id ?? null)]);
+    if (taskListSession?.id !== activeSessionId) {
+      return;
+    }
+
+    setTasks((currentTasks) => [...currentTasks, createItem(text, activeSessionId ?? null)]);
     setTaskText("");
   }
 
@@ -421,6 +531,14 @@ export default function App() {
     }
 
     setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
+  }
+
+  function toggleTaskCompleted(taskId) {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !(task.completed ?? false) } : task,
+      ),
+    );
   }
 
   function selectTask(taskId) {
@@ -467,6 +585,18 @@ export default function App() {
 
   function stopSession() {
     setActiveSessionId(null);
+  }
+
+  function continueSession() {
+    if (!selectedSession) {
+      return;
+    }
+
+    setActiveSessionId(selectedSession.id);
+    setSelectedSessionId(selectedSession.id);
+    setActiveTaskId(null);
+    setTimerRunning(false);
+    setTimerSeconds(POMODORO_SECONDS);
   }
 
   function removeSession(sessionId) {
@@ -566,9 +696,6 @@ export default function App() {
                 <div className="timer-task">
                   <strong>{activeTask ? activeTask.text : "Choose a task"}</strong>
                 </div>
-                <div className="timer-spent">
-                  Spent {formatSpentTime(activeTask?.focusSeconds)} on this task
-                </div>
               <div className="timer-actions">
                 <button
                   type="button"
@@ -581,15 +708,6 @@ export default function App() {
                     Reset
                 </button>
               </div>
-                <div className="timer-status">
-                  {timerSeconds === 0
-                    ? "Time for a break."
-                    : timerRunning
-                      ? "Focus is running."
-                      : activeTask
-                      ? "Ready to focus."
-                        : "Pick a task to start."}
-                </div>
             </div>
           </section>
           </GlassCard>
@@ -606,9 +724,12 @@ export default function App() {
                   type="text"
                   value={taskText}
                   onChange={(event) => setTaskText(event.target.value)}
-                  placeholder="What needs focus?"
+                  placeholder={canEditTaskList ? "What needs focus?" : "Continue session to add tasks"}
+                  disabled={!canEditTaskList}
                 />
-                <button type="submit">Add</button>
+                <button type="submit" disabled={!canEditTaskList}>
+                  Add
+                </button>
               </div>
             </form>
             <ul ref={taskListRef} className="item-list" aria-label="Saved tasks">
@@ -618,6 +739,7 @@ export default function App() {
                     key={task.id}
                     className={`${task.id === activeTaskId ? "is-active" : ""}${
                       isViewingTaskHistory ? " is-session-task" : ""
+                    }${task.completed ? " is-completed" : ""
                     }`.trim()}
                   >
                     <span>{task.text}</span>
@@ -631,6 +753,16 @@ export default function App() {
                           <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
                         </button>
                       </>
+                    )}
+                    {task.isDeleted ? null : (
+                      <label className="task-checkbox" aria-label={`Mark ${task.text} as done`}>
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => toggleTaskCompleted(task.id)}
+                        />
+                        <span aria-hidden="true" />
+                      </label>
                     )}
                   </li>
                 ))
@@ -699,33 +831,16 @@ export default function App() {
                 </div>
               </div>
             </div>
-            {activeSession ? (
+            {activeSession && selectedSession?.id === activeSessionId ? (
               <button className="session-stop" type="button" onClick={stopSession}>
                 Stop session
               </button>
             ) : null}
-            <div className="session-details" aria-live="polite">
-              <div className="session-details-title">
-                <span>Viewed session</span>
-                <strong>
-                  {selectedSession
-                    ? selectedSession.name || formatSessionDate(selectedSession.startedAt)
-                    : "Choose a session"}
-                </strong>
-              </div>
-              {selectedSessionTasks.length > 0 ? (
-                <ul className="session-task-list" aria-label="Session task time">
-                  {selectedSessionTasks.map((task) => (
-                    <li key={task.id}>
-                      <span>{task.text}</span>
-                      <strong>{formatSpentTime(task.seconds)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="session-empty">No task time saved for this session yet.</p>
-              )}
-            </div>
+            {selectedSession && selectedSession.id !== activeSessionId ? (
+              <button className="session-continue" type="button" onClick={continueSession}>
+                Continue session
+              </button>
+            ) : null}
           </section>
           </GlassCard>
           <GlassCard className="panel-half">
@@ -733,8 +848,18 @@ export default function App() {
             <div className="panel-header">
               <h2 id="activity-title">Charts</h2>
             </div>
+            <div className="chart-tabs" aria-label="Chart views">
+              <button className="is-active" type="button">
+                Time spent
+              </button>
+              <button type="button">
+                Task done
+              </button>
+            </div>
             <div className="chart-grid chart-grid-empty">
-                <div className="chart-mini-card chart-empty-card" aria-label="Empty charts card" />
+                <div className="chart-mini-card chart-empty-card">
+                  <WeeklyTimeSpentChart session={summarySession} />
+                </div>
             </div>
           </section>
           </GlassCard>
