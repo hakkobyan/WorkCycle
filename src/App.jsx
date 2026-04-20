@@ -10,6 +10,7 @@ import {
 } from "./components/glass-select";
 import { GlassCard as EinGlassCard } from "./components/ui/glass-card";
 import { GlassInput } from "./components/ui/glass-input";
+import { GlassSlider } from "./components/ui/glass-slider";
 import GradientBackground from "./components/ui/gradient-background";
 import "./styles.css";
 
@@ -18,7 +19,8 @@ const STORAGE_KEYS = {
   tasks: "pomodoro.tasks",
 };
 
-const POMODORO_SECONDS = 25 * 60;
+const DEFAULT_FOCUS_MINUTES = 25;
+const DEFAULT_BREAK_MINUTES = 5;
 
 function cn(...values) {
   return values.filter(Boolean).join(" ");
@@ -93,6 +95,27 @@ function formatSessionDate(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function playTimerBell(audioContext) {
+  const now = audioContext.currentTime;
+  const notes = [880, 1174.66, 880];
+
+  notes.forEach((frequency, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const startsAt = now + index * 0.18;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, startsAt);
+    gain.gain.setValueAtTime(0.0001, startsAt);
+    gain.gain.exponentialRampToValueAtTime(0.2, startsAt + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startsAt + 0.16);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(startsAt);
+    oscillator.stop(startsAt + 0.18);
+  });
 }
 
 function formatChartTick(minutes) {
@@ -300,11 +323,15 @@ export default function App() {
   const [sessionName, setSessionName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(POMODORO_SECONDS);
+  const [focusMinutes, setFocusMinutes] = useState(DEFAULT_FOCUS_MINUTES);
+  const [breakMinutes, setBreakMinutes] = useState(DEFAULT_BREAK_MINUTES);
+  const [timerSeconds, setTimerSeconds] = useState(DEFAULT_FOCUS_MINUTES * 60);
+  const [timerMode, setTimerMode] = useState("focus");
   const [timerRunning, setTimerRunning] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const audioContextRef = useRef(null);
   const taskListRef = useRef(null);
   const taskCountRef = useRef(tasks.length);
   const activeSessionBaseRef = useRef({ durationSeconds: 0, resumedAt: 0 });
@@ -324,7 +351,11 @@ export default function App() {
     .map((task) => ({ label: task.text, value: task.focusSeconds ?? 0 }))
     .sort((firstTask, secondTask) => secondTask.value - firstTask.value);
   const selectedSessionIndex = sessions.findIndex((session) => session.id === selectedSessionId);
-  const timerProgress = POMODORO_SECONDS - timerSeconds;
+  const focusDuration = focusMinutes * 60;
+  const breakDuration = breakMinutes * 60;
+  const timerDuration = timerMode === "rest" ? breakDuration : focusDuration;
+  const timerProgress = timerDuration - timerSeconds;
+  const canRunTimer = timerMode === "rest" || Boolean(activeTask);
   const taskHistorySession = selectedSession?.id !== activeSessionId ? selectedSession : null;
   const taskListSession = selectedSession ?? activeSession;
   const isViewingTaskHistory = Boolean(taskHistorySession);
@@ -469,7 +500,7 @@ export default function App() {
   }, [activeSessionId, selectedSessionId, setTasks, tasks]);
 
   useEffect(() => {
-    if (!timerRunning || !activeTaskId) {
+    if (!timerRunning || (timerMode === "focus" && !activeTaskId)) {
       return undefined;
     }
 
@@ -481,34 +512,45 @@ export default function App() {
           return 0;
         }
 
-        setTasks((currentTasks) =>
-          currentTasks.map((task) =>
-            task.id === activeTaskId
-              ? { ...task, focusSeconds: (task.focusSeconds ?? 0) + 1 }
-              : task,
-          ),
-        );
-
-        if (activeSessionId) {
-          setSessions((currentSessions) =>
-            currentSessions.map((session) =>
-              session.id === activeSessionId
-                ? {
-                    ...session,
-                    taskSeconds: {
-                      ...(session.taskSeconds ?? {}),
-                      [activeTaskId]: (session.taskSeconds?.[activeTaskId] ?? 0) + 1,
-                    },
-                  }
-                : session,
+        if (timerMode === "focus") {
+          setTasks((currentTasks) =>
+            currentTasks.map((task) =>
+              task.id === activeTaskId
+                ? { ...task, focusSeconds: (task.focusSeconds ?? 0) + 1 }
+                : task,
             ),
           );
+
+          if (activeSessionId) {
+            setSessions((currentSessions) =>
+              currentSessions.map((session) =>
+                session.id === activeSessionId
+                  ? {
+                      ...session,
+                      taskSeconds: {
+                        ...(session.taskSeconds ?? {}),
+                        [activeTaskId]: (session.taskSeconds?.[activeTaskId] ?? 0) + 1,
+                      },
+                    }
+                  : session,
+              ),
+            );
+          }
         }
 
         if (currentSeconds <= 1) {
           window.clearInterval(timerId);
+          ringTimerBell();
+
+          if (timerMode === "focus") {
+            setTimerMode("rest");
+            setTimerRunning(true);
+            return breakDuration;
+          }
+
+          setTimerMode("focus");
           setTimerRunning(false);
-          return 0;
+          return focusDuration;
         }
 
         return currentSeconds - 1;
@@ -516,7 +558,7 @@ export default function App() {
     }, 1000);
 
     return () => window.clearInterval(timerId);
-  }, [activeSessionId, activeTaskId, setSessions, setTasks, timerRunning]);
+  }, [activeSessionId, activeTaskId, breakDuration, focusDuration, setSessions, setTasks, timerMode, timerRunning]);
 
   function addTask(event) {
     event.preventDefault();
@@ -554,12 +596,66 @@ export default function App() {
   function selectTask(taskId) {
     setActiveTaskId(taskId);
     setTimerRunning(false);
-    setTimerSeconds(POMODORO_SECONDS);
+    setTimerMode("focus");
+    setTimerSeconds(focusDuration);
   }
 
   function resetTimer() {
     setTimerRunning(false);
-    setTimerSeconds(POMODORO_SECONDS);
+    setTimerMode("focus");
+    setTimerSeconds(focusDuration);
+  }
+
+  function updateFocusMinutes(value) {
+    const nextMinutes = value[0] ?? DEFAULT_FOCUS_MINUTES;
+    const nextDuration = nextMinutes * 60;
+
+    setFocusMinutes(nextMinutes);
+
+    if (timerMode === "focus") {
+      setTimerSeconds((currentSeconds) =>
+        timerRunning ? Math.min(currentSeconds, nextDuration) : nextDuration,
+      );
+    }
+  }
+
+  function updateBreakMinutes(value) {
+    const nextMinutes = value[0] ?? DEFAULT_BREAK_MINUTES;
+    const nextDuration = nextMinutes * 60;
+
+    setBreakMinutes(nextMinutes);
+
+    if (timerMode === "rest") {
+      setTimerSeconds((currentSeconds) =>
+        timerRunning ? Math.min(currentSeconds, nextDuration) : nextDuration,
+      );
+    }
+  }
+
+  function ensureTimerAudio() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContext) {
+      return null;
+    }
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
+
+    if (audioContextRef.current.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+
+    return audioContextRef.current;
+  }
+
+  function ringTimerBell() {
+    const audioContext = ensureTimerAudio();
+
+    if (audioContext) {
+      playTimerBell(audioContext);
+    }
   }
 
   function openSettings() {
@@ -606,7 +702,8 @@ export default function App() {
     setSelectedSessionId(selectedSession.id);
     setActiveTaskId(null);
     setTimerRunning(false);
-    setTimerSeconds(POMODORO_SECONDS);
+    setTimerMode("focus");
+    setTimerSeconds(focusDuration);
   }
 
   function removeSession(sessionId) {
@@ -678,6 +775,36 @@ export default function App() {
             <div id="settings-title" className="settings-popup-title">
               Settings
             </div>
+            <div className="timer-settings" aria-label="Timer settings">
+              <label className="timer-setting-control">
+                <span>
+                  Focus timer
+                  <strong>{focusMinutes} min</strong>
+                </span>
+                <GlassSlider
+                  value={[focusMinutes]}
+                  min={5}
+                  max={60}
+                  step={5}
+                  onValueChange={updateFocusMinutes}
+                  aria-label="Focus timer minutes"
+                />
+              </label>
+              <label className="timer-setting-control">
+                <span>
+                  Break timer
+                  <strong>{breakMinutes} min</strong>
+                </span>
+                <GlassSlider
+                  value={[breakMinutes]}
+                  min={1}
+                  max={30}
+                  step={1}
+                  onValueChange={updateBreakMinutes}
+                  aria-label="Break timer minutes"
+                />
+              </label>
+            </div>
             <button type="button" onClick={closeSettings}>
               Close
             </button>
@@ -694,38 +821,45 @@ export default function App() {
             <div className="timer-card" aria-live="polite">
                 <div className="timer-progress">
                   <AnimatedCircularProgressBar
-                    max={POMODORO_SECONDS}
+                    max={timerDuration}
                     min={0}
                     value={timerProgress}
-                    gaugePrimaryColor="#faeb92"
+                    gaugePrimaryColor={timerMode === "rest" ? "#9ee8ff" : "#faeb92"}
                     gaugeSecondaryColor="rgb(255 255 255 / 18%)"
                     className="timer-progress-ring"
                   />
                   <div className="timer-display">{formatTimer(timerSeconds)}</div>
                 </div>
                 <div className="timer-task">
-                  <GlassSelect
-                    value={activeTaskId ?? ""}
-                    onValueChange={selectTask}
-                    disabled={focusableTasks.length === 0}
-                  >
-                    <GlassSelectTrigger className="timer-task-select h-6 rounded-lg px-2 py-0.5 text-[10px]" aria-label="Choose task">
-                      <GlassSelectValue placeholder="Choose a task" />
-                    </GlassSelectTrigger>
-                    <GlassSelectContent className="max-h-36 rounded-lg">
-                      {focusableTasks.map((task) => (
-                        <GlassSelectItem key={task.id} value={task.id} className="py-0.5 pl-7 text-[10px]">
-                          {task.text}
-                        </GlassSelectItem>
-                      ))}
-                    </GlassSelectContent>
-                  </GlassSelect>
+                  {timerMode === "rest" ? (
+                    <strong className="timer-rest-label">Rest</strong>
+                  ) : (
+                    <GlassSelect
+                      value={activeTaskId ?? ""}
+                      onValueChange={selectTask}
+                      disabled={focusableTasks.length === 0}
+                    >
+                      <GlassSelectTrigger className="timer-task-select h-6 rounded-lg px-2 py-0.5 text-[10px]" aria-label="Choose task">
+                        <GlassSelectValue placeholder="Choose a task" />
+                      </GlassSelectTrigger>
+                      <GlassSelectContent className="max-h-36 rounded-lg">
+                        {focusableTasks.map((task) => (
+                          <GlassSelectItem key={task.id} value={task.id} className="py-0.5 pl-7 text-[10px]">
+                            {task.text}
+                          </GlassSelectItem>
+                        ))}
+                      </GlassSelectContent>
+                    </GlassSelect>
+                  )}
                 </div>
               <div className="timer-actions">
                 <button
                   type="button"
-                    onClick={() => setTimerRunning((isRunning) => !isRunning)}
-                    disabled={!activeTask || timerSeconds === 0}
+                    onClick={() => {
+                      ensureTimerAudio();
+                      setTimerRunning((isRunning) => !isRunning);
+                    }}
+                    disabled={!canRunTimer || timerSeconds === 0}
                   >
                     {timerRunning ? "Pause" : "Start"}
                 </button>
@@ -770,14 +904,9 @@ export default function App() {
                     <span>{task.text}</span>
                     <span className="task-time">{formatSpentTime(task.displaySeconds)}</span>
                     {isViewingTaskHistory || task.isDeleted ? null : (
-                      <>
-                        <button type="button" onClick={() => selectTask(task.id)}>
-                          {task.id === activeTaskId ? "Selected" : "Focus"}
-                        </button>
-                        <button type="button" aria-label={`Delete task ${task.text}`} onClick={() => removeTask(task.id)}>
-                          <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
-                        </button>
-                      </>
+                      <button type="button" aria-label={`Delete task ${task.text}`} onClick={() => removeTask(task.id)}>
+                        <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
+                      </button>
                     )}
                     {task.isDeleted ? null : (
                       <label className="task-checkbox" aria-label={`Mark ${task.text} as done`}>

@@ -697,6 +697,33 @@ body {
   font-weight: 800;
 }
 
+.timer-settings {
+  display: grid;
+  gap: 16px;
+}
+
+.timer-setting-control {
+  display: grid;
+  gap: 9px;
+}
+
+.timer-setting-control > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: rgb(255 255 255 / 82%);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.timer-setting-control strong {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .settings-popup button {
   width: 100%;
 }
@@ -1007,6 +1034,15 @@ body {
 .timer-task-select > svg {
   position: absolute;
   right: 8px;
+}
+
+.timer-rest-label {
+  display: grid;
+  min-height: 24px;
+  place-items: center;
+  color: rgb(255 255 255 / 88%);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .timer-progress {
@@ -2795,7 +2831,7 @@ body {
 }
 
 .item-list li {
-  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
 }
 
 .item-list li.is-session-task {
