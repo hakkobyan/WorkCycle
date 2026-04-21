@@ -14,10 +14,10 @@ export default function GradientBackground() {
         thirdColor="236, 116, 198"
         fourthColor="78, 44, 214"
         fifthColor="128, 118, 255"
-        pointerColor="216, 164, 255"
-        size="70%"
+        pointerColor="168, 205, 255"
+        size="62%"
         blendingValue="screen"
-        interactive={false}
+        interactive
       />
       <div className="gradient-background-orb gradient-background-orb-blue" />
       <div className="gradient-background-orb gradient-background-orb-yellow" />

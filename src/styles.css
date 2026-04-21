@@ -2124,6 +2124,10 @@ body {
   display: none;
 }
 
+.gradient-background-animation .gradients-container > div:last-child {
+  opacity: 0.34;
+}
+
 .top-menu::before {
   inset: 0;
   border: 0;
@@ -3037,6 +3041,21 @@ body {
     0 18px 46px rgb(0 0 0 / 24%);
   backdrop-filter: blur(36px) saturate(190%);
   -webkit-backdrop-filter: blur(36px) saturate(190%);
+}
+
+.top-menu::before,
+.settings-popup::before,
+.panel::before,
+.item-list li::before {
+  background: radial-gradient(
+    calc(var(--glow-size) * 0.75) calc(var(--glow-size) * 0.75) at
+      var(--local-x, 50%) var(--local-y, 50%),
+    rgb(255 255 255 / 38%),
+    transparent 72%
+  );
+  background-attachment: initial;
+  opacity: var(--glow-active, 0);
+  transition: opacity 180ms ease;
 }
 
 .app-intro-menu,

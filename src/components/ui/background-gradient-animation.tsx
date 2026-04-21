@@ -22,10 +22,6 @@ export const BackgroundGradientAnimation = ({
   const curYRef = useRef(0);
   const tgXRef = useRef(0);
   const tgYRef = useRef(0);
-  const [curX, setCurX] = useState(0);
-  const [curY, setCurY] = useState(0);
-  const [tgX, setTgX] = useState(0);
-  const [tgY, setTgY] = useState(0);
   const [isSafari, setIsSafari] = useState(false);
 
   useEffect(() => {
@@ -61,11 +57,9 @@ export const BackgroundGradientAnimation = ({
 
     function move() {
       if (interactiveRef.current) {
-        curXRef.current += (tgXRef.current - curXRef.current) / 20;
-        curYRef.current += (tgYRef.current - curYRef.current) / 20;
+        curXRef.current += (tgXRef.current - curXRef.current) / 18;
+        curYRef.current += (tgYRef.current - curYRef.current) / 18;
         interactiveRef.current.style.transform = `translate(${Math.round(curXRef.current)}px, ${Math.round(curYRef.current)}px)`;
-        setCurX(curXRef.current);
-        setCurY(curYRef.current);
       }
 
       animationFrameId = window.requestAnimationFrame(move);
@@ -77,11 +71,6 @@ export const BackgroundGradientAnimation = ({
   }, [interactive]);
 
   useEffect(() => {
-    tgXRef.current = tgX;
-    tgYRef.current = tgY;
-  }, [tgX, tgY]);
-
-  useEffect(() => {
     setIsSafari(/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
   }, []);
 
@@ -91,8 +80,8 @@ export const BackgroundGradientAnimation = ({
     }
 
     function handlePointerMove(event) {
-      setTgX(event.clientX);
-      setTgY(event.clientY);
+      tgXRef.current = event.clientX;
+      tgYRef.current = event.clientY;
     }
 
     window.addEventListener("pointermove", handlePointerMove);

@@ -459,17 +459,52 @@ export default function App() {
 
   useEffect(() => {
     function syncPointer(event) {
-      const x = event.clientX.toFixed(2);
-      const y = event.clientY.toFixed(2);
       const xp = (event.clientX / window.innerWidth).toFixed(2);
 
-      document.documentElement.style.setProperty("--x", x);
-      document.documentElement.style.setProperty("--y", y);
       document.documentElement.style.setProperty("--xp", xp);
     }
 
     window.addEventListener("pointermove", syncPointer);
     return () => window.removeEventListener("pointermove", syncPointer);
+  }, []);
+
+  useEffect(() => {
+    const glowTargets = document.querySelectorAll(".top-menu, .panel, .item-list li, .settings-popup");
+
+    function updateLocalGlow(target, event) {
+      const rect = target.getBoundingClientRect();
+      target.style.setProperty("--local-x", `${event.clientX - rect.left}px`);
+      target.style.setProperty("--local-y", `${event.clientY - rect.top}px`);
+      target.style.setProperty("--glow-active", "1");
+    }
+
+    function resetLocalGlow(target) {
+      target.style.setProperty("--glow-active", "0");
+    }
+
+    glowTargets.forEach((target) => {
+      target.style.setProperty("--glow-active", "0");
+
+      const handlePointerEnter = (event) => updateLocalGlow(target, event);
+      const handlePointerMove = (event) => updateLocalGlow(target, event);
+      const handlePointerLeave = () => resetLocalGlow(target);
+
+      target.addEventListener("pointerenter", handlePointerEnter);
+      target.addEventListener("pointermove", handlePointerMove);
+      target.addEventListener("pointerleave", handlePointerLeave);
+
+      target._handlePointerEnter = handlePointerEnter;
+      target._handlePointerMove = handlePointerMove;
+      target._handlePointerLeave = handlePointerLeave;
+    });
+
+    return () => {
+      glowTargets.forEach((target) => {
+        target.removeEventListener("pointerenter", target._handlePointerEnter);
+        target.removeEventListener("pointermove", target._handlePointerMove);
+        target.removeEventListener("pointerleave", target._handlePointerLeave);
+      });
+    };
   }, []);
 
   useEffect(() => {
