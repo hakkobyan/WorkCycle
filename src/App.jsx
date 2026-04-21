@@ -17,6 +17,7 @@ import "./styles.css";
 const STORAGE_KEYS = {
   sessions: "pomodoro.sessions",
   tasks: "pomodoro.tasks",
+  cardTransparency: "pomodoro.cardTransparency",
 };
 
 const DEFAULT_FOCUS_MINUTES = 25;
@@ -52,8 +53,20 @@ function createItem(text, sessionId) {
     sessionId,
     createdAt: new Date().toISOString(),
     focusSeconds: 0,
+    remainingFocusSeconds: null,
     completed: false,
   };
+}
+
+function readStoredNumber(key, fallbackValue) {
+  try {
+    const storedValue = window.localStorage.getItem(key);
+    const parsedValue = storedValue === null ? NaN : Number(storedValue);
+
+    return Number.isFinite(parsedValue) ? parsedValue : fallbackValue;
+  } catch {
+    return fallbackValue;
+  }
 }
 
 function createSession(name) {
@@ -274,6 +287,49 @@ function WeeklyTimeSpentChart({ session }) {
   );
 }
 
+function TaskDoneChart({ tasks, session }) {
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((task) => task.completed).length;
+  const completionPercent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+  const remainingTasks = Math.max(totalTasks - completedTasks, 0);
+  const completedTaskLabels = tasks.filter((task) => task.completed).slice(0, 4);
+  const sessionTitle = session ? session.name || formatSessionDate(session.startedAt) : "No session";
+
+  return (
+    <div className="task-done-chart" aria-label="Task completion chart">
+      <div className="task-done-header">
+        <div>
+          <span>{sessionTitle}</span>
+          <strong>{completionPercent}% done</strong>
+        </div>
+        <em>{completedTasks}/{totalTasks || 0}</em>
+      </div>
+      <div className="task-done-progress" aria-hidden="true">
+        <div className="task-done-progress-fill" style={{ width: `${completionPercent}%` }} />
+      </div>
+      <div className="task-done-stats">
+        <div>
+          <strong>{completedTasks}</strong>
+          <span>Completed</span>
+        </div>
+        <div>
+          <strong>{remainingTasks}</strong>
+          <span>Remaining</span>
+        </div>
+      </div>
+      {completedTaskLabels.length > 0 ? (
+        <ul className="task-done-list">
+          {completedTaskLabels.map((task) => (
+            <li key={task.id}>{task.text}</li>
+          ))}
+        </ul>
+      ) : (
+        <div className="task-done-empty">No completed tasks yet</div>
+      )}
+    </div>
+  );
+}
+
 function GlassCard({ className = "", children }) {
   return (
     <div className={cn("glass-card-frame", className)}>
@@ -325,9 +381,13 @@ export default function App() {
   const [settingsClosing, setSettingsClosing] = useState(false);
   const [focusMinutes, setFocusMinutes] = useState(DEFAULT_FOCUS_MINUTES);
   const [breakMinutes, setBreakMinutes] = useState(DEFAULT_BREAK_MINUTES);
+  const [cardTransparency, setCardTransparency] = useState(() =>
+    readStoredNumber(STORAGE_KEYS.cardTransparency, 4),
+  );
   const [timerSeconds, setTimerSeconds] = useState(DEFAULT_FOCUS_MINUTES * 60);
   const [timerMode, setTimerMode] = useState("focus");
   const [timerRunning, setTimerRunning] = useState(false);
+  const [activeChartTab, setActiveChartTab] = useState("time");
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -355,7 +415,7 @@ export default function App() {
   const breakDuration = breakMinutes * 60;
   const timerDuration = timerMode === "rest" ? breakDuration : focusDuration;
   const timerProgress = timerDuration - timerSeconds;
-  const canRunTimer = timerMode === "rest" || Boolean(activeTask);
+  const canRunTimer = timerMode === "rest" || Boolean(activeTask && (activeSessionId || activeTask.sessionId));
   const taskHistorySession = selectedSession?.id !== activeSessionId ? selectedSession : null;
   const taskListSession = selectedSession ?? activeSession;
   const isViewingTaskHistory = Boolean(taskHistorySession);
@@ -395,6 +455,7 @@ export default function App() {
         displaySeconds: task.focusSeconds ?? 0,
         isDeleted: false,
       }));
+  const chartTasks = visibleTasks.filter((task) => !task.isDeleted);
 
   useEffect(() => {
     function syncPointer(event) {
@@ -410,6 +471,10 @@ export default function App() {
     window.addEventListener("pointermove", syncPointer);
     return () => window.removeEventListener("pointermove", syncPointer);
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEYS.cardTransparency, String(cardTransparency));
+  }, [cardTransparency]);
 
   useEffect(() => {
     if (!activeSessionId) {
@@ -513,10 +578,16 @@ export default function App() {
         }
 
         if (timerMode === "focus") {
+          const nextRemainingSeconds = Math.max(currentSeconds - 1, 0);
+
           setTasks((currentTasks) =>
             currentTasks.map((task) =>
               task.id === activeTaskId
-                ? { ...task, focusSeconds: (task.focusSeconds ?? 0) + 1 }
+                ? {
+                    ...task,
+                    focusSeconds: (task.focusSeconds ?? 0) + 1,
+                    remainingFocusSeconds: nextRemainingSeconds,
+                  }
                 : task,
             ),
           );
@@ -543,6 +614,7 @@ export default function App() {
           ringTimerBell();
 
           if (timerMode === "focus") {
+            persistTaskRemainingFocus(activeTaskId, focusDuration);
             setTimerMode("rest");
             setTimerRunning(true);
             return breakDuration;
@@ -593,17 +665,39 @@ export default function App() {
     );
   }
 
+  function persistTaskRemainingFocus(taskId, nextRemainingSeconds) {
+    if (!taskId) {
+      return;
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, remainingFocusSeconds: nextRemainingSeconds } : task,
+      ),
+    );
+  }
+
   function selectTask(taskId) {
+    if (activeTaskId && activeTaskId !== taskId && timerMode === "focus") {
+      persistTaskRemainingFocus(activeTaskId, timerSeconds);
+    }
+
+    const nextTask = tasks.find((task) => task.id === taskId);
+
     setActiveTaskId(taskId);
     setTimerRunning(false);
     setTimerMode("focus");
-    setTimerSeconds(focusDuration);
+    setTimerSeconds(nextTask?.remainingFocusSeconds ?? focusDuration);
   }
 
   function resetTimer() {
     setTimerRunning(false);
     setTimerMode("focus");
     setTimerSeconds(focusDuration);
+
+    if (activeTaskId) {
+      persistTaskRemainingFocus(activeTaskId, focusDuration);
+    }
   }
 
   function updateFocusMinutes(value) {
@@ -656,6 +750,41 @@ export default function App() {
     if (audioContext) {
       playTimerBell(audioContext);
     }
+  }
+
+  function startTaskSessionIfNeeded() {
+    if (timerMode !== "focus" || !activeTask) {
+      return true;
+    }
+
+    const taskSessionId = activeTask.sessionId;
+
+    if (activeSessionId || !taskSessionId) {
+      return Boolean(activeSessionId || taskSessionId);
+    }
+
+    if (!sessions.some((session) => session.id === taskSessionId)) {
+      return false;
+    }
+
+    setActiveSessionId(taskSessionId);
+    setSelectedSessionId(taskSessionId);
+    return true;
+  }
+
+  function handleTimerButtonClick() {
+    ensureTimerAudio();
+
+    if (timerRunning) {
+      setTimerRunning(false);
+      return;
+    }
+
+    if (!startTaskSessionIfNeeded()) {
+      return;
+    }
+
+    setTimerRunning(true);
   }
 
   function openSettings() {
@@ -733,11 +862,18 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell" aria-label="Pomodoro dashboard">
+    <main
+      className="app-shell"
+      aria-label="Pomodoro dashboard"
+      style={{
+        "--card-transparency": `${cardTransparency}%`,
+        "--card-surface-transparency": `${Math.min(cardTransparency + 3, 40)}%`,
+      }}
+    >
       <GradientBackground />
-      <GlassCard className="top-menu-frame">
+      <GlassCard className="top-menu-frame app-intro-menu">
         <header className="top-menu" aria-label="Main menu">
-          <div className="menu-title">Pomodoro</div>
+          <div className="menu-title">WorkCycle</div>
           <div className="settings-area">
             <button
               className="settings-button"
@@ -813,7 +949,7 @@ export default function App() {
       ) : null}
       <section className="board" aria-label="Pomodoro board frame">
         <div className="board-row board-row-top">
-          <GlassCard className="panel-small">
+          <GlassCard className="panel-small app-intro-top">
           <section className="panel" aria-labelledby="timer-title">
             <div className="panel-header">
               <h1 id="timer-title">Timer</h1>
@@ -855,10 +991,7 @@ export default function App() {
               <div className="timer-actions">
                 <button
                   type="button"
-                    onClick={() => {
-                      ensureTimerAudio();
-                      setTimerRunning((isRunning) => !isRunning);
-                    }}
+                    onClick={handleTimerButtonClick}
                     disabled={!canRunTimer || timerSeconds === 0}
                   >
                     {timerRunning ? "Pause" : "Start"}
@@ -870,7 +1003,7 @@ export default function App() {
             </div>
           </section>
           </GlassCard>
-          <GlassCard className="panel-wide">
+          <GlassCard className="panel-wide app-intro-top">
           <section className="panel" aria-labelledby="tasks-title">
             <div className="panel-header">
               <h1 id="tasks-title">Tasks</h1>
@@ -930,7 +1063,7 @@ export default function App() {
           </GlassCard>
         </div>
         <div className="board-row board-row-bottom">
-          <GlassCard className="panel-half">
+          <GlassCard className="panel-half app-intro-bottom">
           <section className="panel" aria-labelledby="sessions-title">
             <div className="panel-header">
               <h2 id="sessions-title">Sessions</h2>
@@ -997,22 +1130,34 @@ export default function App() {
             ) : null}
           </section>
           </GlassCard>
-          <GlassCard className="panel-half">
+          <GlassCard className="panel-half app-intro-bottom">
           <section className="panel" aria-labelledby="activity-title">
             <div className="panel-header">
               <h2 id="activity-title">Charts</h2>
             </div>
             <div className="chart-tabs" aria-label="Chart views">
-              <button className="is-active" type="button">
+              <button
+                className={activeChartTab === "time" ? "is-active" : ""}
+                type="button"
+                onClick={() => setActiveChartTab("time")}
+              >
                 Time spent
               </button>
-              <button type="button">
+              <button
+                className={activeChartTab === "done" ? "is-active" : ""}
+                type="button"
+                onClick={() => setActiveChartTab("done")}
+              >
                 Task done
               </button>
             </div>
             <div className="chart-grid chart-grid-empty">
                 <div className="chart-mini-card chart-empty-card">
+                  {activeChartTab === "time" ? (
                   <WeeklyTimeSpentChart session={summarySession} />
+                  ) : (
+                  <TaskDoneChart tasks={chartTasks} session={summarySession} />
+                  )}
                 </div>
             </div>
           </section>
