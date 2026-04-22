@@ -215,7 +215,7 @@ function MiniChart({ data }) {
   );
 }
 
-function WeeklyTimeSpentChart({ session, animationEnabled }) {
+function WeeklyTimeSpentChart({ sessions, selectedSession }) {
   const days = [
     { short: "Mon", full: "Monday" },
     { short: "Tue", full: "Tuesday" },
@@ -228,19 +228,31 @@ function WeeklyTimeSpentChart({ session, animationEnabled }) {
   const chartData = days.map((day) => ({ ...day, seconds: 0 }));
   let sessionDayIndex = null;
 
-  if (session) {
+  sessions.forEach((session) => {
     const date = new Date(session.startedAt);
 
     if (!Number.isNaN(date.getTime())) {
       const dayIndex = (date.getDay() + 6) % 7;
 
-      sessionDayIndex = dayIndex;
-      chartData[dayIndex].seconds = session.durationSeconds ?? 0;
+      chartData[dayIndex].seconds += session.durationSeconds ?? 0;
+    }
+  });
+
+  if (selectedSession) {
+    const date = new Date(selectedSession.startedAt);
+
+    if (!Number.isNaN(date.getTime())) {
+      sessionDayIndex = (date.getDay() + 6) % 7;
     }
   }
 
-  const sessionTitle = session ? session.name || formatSessionDate(session.startedAt) : "No session";
-  const sessionSeconds = session?.durationSeconds ?? 0;
+  const sessionTitle = selectedSession
+    ? selectedSession.name || formatSessionDate(selectedSession.startedAt)
+    : "All sessions";
+  const sessionSeconds = selectedSession?.durationSeconds ?? chartData.reduce(
+    (totalSeconds, item) => totalSeconds + item.seconds,
+    0,
+  );
 
   const maxSeconds = Math.max(...chartData.map((item) => item.seconds), 60);
   const maxMinutes = Math.max(1, Math.ceil(maxSeconds / 60));
@@ -249,7 +261,6 @@ function WeeklyTimeSpentChart({ session, animationEnabled }) {
   const timeTicks = [roundedMaxMinutes, roundedMaxMinutes * 0.75, roundedMaxMinutes * 0.5, roundedMaxMinutes * 0.25];
   const hasData = chartData.some((item) => item.seconds > 0);
   const activeDay = sessionDayIndex;
-  const demoHeights = ["68%", "82%", "96%", "74%", "88%", "64%", "100%"];
 
   return (
     <div className="weekly-chart" aria-label="Time spent by day of week">
@@ -271,10 +282,9 @@ function WeeklyTimeSpentChart({ session, animationEnabled }) {
             >
               <div className="weekly-chart-track">
                 <div
-                  className={`weekly-chart-bar${animationEnabled ? " is-animating" : ""}`}
+                  className="weekly-chart-bar"
                   style={{
-                    height: hasData ? demoHeights[index] : "0%",
-                    "--weekly-wave-delay": `${index * 220}ms`,
+                    height: hasData ? `${(item.seconds / scaleMaxSeconds) * 100}%` : "0%",
                   }}
                   title={`${item.full}: ${formatSpentTime(item.seconds)}`}
                 />
@@ -390,7 +400,6 @@ export default function App() {
   const [timerMode, setTimerMode] = useState("focus");
   const [timerRunning, setTimerRunning] = useState(false);
   const [activeChartTab, setActiveChartTab] = useState("time");
-  const [chartAnimationEnabled, setChartAnimationEnabled] = useState(true);
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -410,9 +419,6 @@ export default function App() {
     }))
     .filter((task) => task.seconds > 0)
     .sort((firstTask, secondTask) => secondTask.seconds - firstTask.seconds);
-  const focusChartData = tasks
-    .map((task) => ({ label: task.text, value: task.focusSeconds ?? 0 }))
-    .sort((firstTask, secondTask) => secondTask.value - firstTask.value);
   const selectedSessionIndex = sessions.findIndex((session) => session.id === selectedSessionId);
   const focusDuration = focusMinutes * 60;
   const breakDuration = breakMinutes * 60;
@@ -459,7 +465,6 @@ export default function App() {
         isDeleted: false,
       }));
   const chartTasks = visibleTasks.filter((task) => !task.isDeleted);
-
   useEffect(() => {
     function syncPointer(event) {
       const xp = (event.clientX / window.innerWidth).toFixed(2);
@@ -469,27 +474,6 @@ export default function App() {
 
     window.addEventListener("pointermove", syncPointer);
     return () => window.removeEventListener("pointermove", syncPointer);
-  }, []);
-
-  useEffect(() => {
-    function handleAnimationToggle(event) {
-      const target = event.target;
-
-      if (
-        target instanceof HTMLElement &&
-        (target.isContentEditable ||
-          ["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(target.tagName))
-      ) {
-        return;
-      }
-
-      if (event.key.toLowerCase() === "b") {
-        setChartAnimationEnabled((currentValue) => !currentValue);
-      }
-    }
-
-    window.addEventListener("keydown", handleAnimationToggle);
-    return () => window.removeEventListener("keydown", handleAnimationToggle);
   }, []);
 
   useEffect(() => {
@@ -1213,12 +1197,9 @@ export default function App() {
             <div className="chart-grid chart-grid-empty">
                 <div className="chart-mini-card chart-empty-card">
                   {activeChartTab === "time" ? (
-                  <WeeklyTimeSpentChart
-                    session={summarySession}
-                    animationEnabled={chartAnimationEnabled}
-                  />
+                    <WeeklyTimeSpentChart sessions={sessions} selectedSession={summarySession} />
                   ) : (
-                  <TaskDoneChart tasks={chartTasks} session={summarySession} />
+                    <TaskDoneChart tasks={chartTasks} session={summarySession} />
                   )}
                 </div>
             </div>

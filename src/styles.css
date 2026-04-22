@@ -1844,11 +1844,6 @@ body {
     transform 180ms ease;
 }
 
-.weekly-chart-bar.is-animating {
-  animation: weekly-chart-screw-wave 3.8s ease-in-out infinite;
-  animation-delay: var(--weekly-wave-delay, 0ms);
-}
-
 .weekly-chart-column.is-active .weekly-chart-bar {
   background: linear-gradient(to bottom, rgb(168 226 255 / 82%), rgb(102 175 255 / 42%));
   box-shadow:
@@ -1881,33 +1876,6 @@ body {
   font-size: 13px;
   font-weight: 900;
   pointer-events: none;
-}
-
-@keyframes weekly-chart-screw-wave {
-  0%,
-  100% {
-    transform: scaleY(0.94) rotate(-0.5deg);
-  }
-
-  18% {
-    transform: scaleY(1.06) rotate(0.6deg);
-  }
-
-  36% {
-    transform: scaleY(0.9) rotate(-0.4deg);
-  }
-
-  54% {
-    transform: scaleY(1.08) rotate(0.35deg);
-  }
-
-  72% {
-    transform: scaleY(0.92) rotate(-0.25deg);
-  }
-
-  88% {
-    transform: scaleY(1.04) rotate(0.2deg);
-  }
 }
 
 .weekly-chart-legend {

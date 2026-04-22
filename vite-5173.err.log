@@ -126,3 +126,26 @@ Visit https://react.dev/link/error-boundaries to learn more about error boundari
 
 Previous: [, , function () { [native code] }, function () { [native code] }, focus, false]
 Incoming: [, , 300, 1500, function () { [native code] }, function () { [native code] }, focus, false]
+[2m21:53:13[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31m[Unhandled error] [1mReferenceError[22m: selectedSessionTasks is not defined
+[39m > App src/App.jsx:442:12
+    440 |          })),
+    441 |          ...(taskHistorySession
+    442 |            ? selectedSessionTasks
+        |              ^
+    443 |            .filter((task) => !tasks.some((savedTask) => savedTask.id === task.id))
+    444 |            .map((task) => ({
+ > Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:19
+ > renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:21
+ > updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:18
+ > beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:17
+ > runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:871:29
+ > performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:21
+ > workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:40
+ > renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:10
+ > performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:34
+
+[2m21:53:13[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mAn error occurred in the <App> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
