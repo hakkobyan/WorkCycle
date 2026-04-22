@@ -149,19 +149,42 @@ body {
   display: flex;
   width: 100%;
   min-width: 0;
-  min-height: 0;
+  min-height: calc(var(--control-height) + 0.75rem);
+}
+
+.top-menu-frame > .relative,
+.top-menu-frame .glass-card-shell,
+.top-menu-frame .glass-card-shell > .relative.z-10 {
+  min-height: inherit;
 }
 
 .top-menu {
   position: relative;
-  display: flex;
+  display: grid;
   width: 100%;
-  min-height: var(--control-height);
+  min-height: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--board-gap);
   padding: 0 var(--panel-pad);
   background: transparent;
+}
+
+.menu-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+
+.settings-area {
+  justify-self: end;
+  flex: 0 0 auto;
+}
+
+.settings-button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
 }
 
 .settings-popup::before,
@@ -2999,5 +3022,364 @@ body {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --app-space: 0.75rem;
+    --board-gap: 0.75rem;
+    --panel-pad: 0.9rem;
+    --control-height: 2.75rem;
+    --title-size: 1.2rem;
+    --menu-title-size: 1.05rem;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100dvh;
+  }
+
+  .app-shell {
+    min-height: 100dvh;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .top-menu {
+    min-height: 3.25rem;
+    padding: 0 0.9rem;
+  }
+
+  .top-menu-frame {
+    min-height: 4rem;
+  }
+
+  .menu-title {
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+  }
+
+  .board {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .board-row,
+  .board-row-top,
+  .board-row-bottom {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .panel-small,
+  .panel-wide,
+  .panel-half {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .panel {
+    min-height: auto;
+    padding: var(--panel-pad);
+  }
+
+  .panel-header {
+    align-items: flex-start;
+  }
+
+  .panel-header h1,
+  .panel-header h2 {
+    font-size: 1.2rem;
+    line-height: 1.05;
+  }
+
+  .timer-card {
+    transform: none;
+    padding-top: 0.5rem;
+    gap: 0.85rem;
+  }
+
+  .timer-progress {
+    width: min(100%, 9rem);
+  }
+
+  .timer-display {
+    font-size: 1.15rem;
+  }
+
+  .timer-task {
+    width: min(100%, 12rem);
+  }
+
+  .timer-actions {
+    width: 100%;
+    max-width: none;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .timer-actions button {
+    min-height: 2.75rem;
+  }
+
+  .entry-form,
+  .session-form {
+    margin-top: 1rem;
+  }
+
+  .entry-row,
+  .session-form {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .entry-row > .relative.group,
+  .session-form > .relative.group,
+  .glass-input-control,
+  .glass-input-control-session,
+  .entry-row button,
+  .session-action,
+  .session-stop,
+  .session-continue {
+    width: 100%;
+  }
+
+  .item-list {
+    margin-top: 1rem;
+    overflow: visible;
+    grid-auto-rows: auto;
+  }
+
+  .item-list li,
+  .item-list li.is-session-task,
+  .item-list li.item-list-empty {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: 0.6rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .item-list li.item-list-empty {
+    grid-template-columns: 1fr;
+  }
+
+  .item-list span {
+    white-space: normal;
+  }
+
+  .task-time {
+    min-width: 2.7rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .item-list button {
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
+    min-height: 2rem;
+    padding: 0;
+  }
+
+  .task-checkbox {
+    width: 1.9rem;
+    justify-self: end;
+  }
+
+  .session-summary,
+  .session-form {
+    width: 100%;
+  }
+
+  .session-summary > div {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .session-summary-copy {
+    gap: 0.35rem;
+  }
+
+  .session-summary-arrows {
+    grid-template-columns: repeat(3, minmax(0, 2.5rem));
+    justify-content: start;
+  }
+
+  .session-summary-arrows button {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .session-stop,
+  .session-continue {
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+
+  .analytics-panel .chart-grid {
+    margin-top: 1rem;
+  }
+
+  .chart-mini-card,
+  .analytics-card {
+    padding: 0.9rem;
+  }
+
+  .weekly-chart {
+    gap: 0.6rem;
+  }
+
+  .weekly-chart-session {
+    gap: 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  .weekly-chart-session strong {
+    font-size: 0.9rem;
+  }
+
+  .weekly-chart-body {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+
+  .weekly-chart-scale {
+    padding: 0.45rem 0 1.6rem;
+    font-size: 0.6rem;
+  }
+
+  .weekly-chart-plot {
+    gap: 0.45rem;
+    padding: 0.45rem 0 0;
+  }
+
+  .weekly-chart-column {
+    gap: 0.45rem;
+  }
+
+  .weekly-chart-track,
+  .analytics-card .weekly-chart-track {
+    min-height: 5rem;
+  }
+
+  .weekly-chart-column span {
+    font-size: 0.68rem;
+    padding-top: 0;
+  }
+
+  .settings-overlay .settings-popup {
+    width: min(100vw - 1.5rem, 22rem);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --app-space: 0.625rem;
+    --board-gap: 0.625rem;
+    --panel-pad: 0.8rem;
+  }
+
+  .top-menu {
+    min-height: 3rem;
+    padding: 0 0.8rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .top-menu-frame {
+    min-height: 3.75rem;
+  }
+
+  .menu-title {
+    font-size: 0.95rem;
+  }
+
+  .settings-area {
+    width: auto;
+    justify-self: end;
+  }
+
+  .settings-button {
+    width: 2.35rem;
+    min-width: 2.35rem;
+    min-height: 2.35rem;
+    padding: 0;
+  }
+
+  .panel-header h1,
+  .panel-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .timer-progress {
+    width: min(100%, 8.25rem);
+  }
+
+  .timer-display {
+    font-size: 1rem;
+  }
+
+  .timer-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .item-list li,
+  .item-list li.is-session-task {
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: 0.45rem;
+    padding: 0.5rem 0.55rem;
+  }
+
+  .item-list span {
+    font-size: 0.82rem;
+  }
+
+  .task-time {
+    grid-column: auto;
+    min-width: 2.35rem;
+    justify-self: end;
+    font-size: 0.72rem;
+  }
+
+  .item-list button {
+    width: 1.85rem;
+    min-width: 1.85rem;
+    height: 1.85rem;
+    min-height: 1.85rem;
+  }
+
+  .task-checkbox {
+    width: 1.75rem;
+  }
+
+  .weekly-chart-body {
+    grid-template-columns: 1.7rem minmax(0, 1fr);
+  }
+
+  .weekly-chart-scale {
+    font-size: 0.55rem;
+  }
+
+  .weekly-chart-plot {
+    gap: 0.3rem;
+  }
+
+  .weekly-chart-column span {
+    font-size: 0.62rem;
+  }
+
+  .settings-overlay {
+    padding: 0.75rem;
   }
 }
