@@ -1190,8 +1190,8 @@ export default function App() {
                 max={timerDuration}
                 min={0}
                 value={timerProgress}
-                gaugePrimaryColor={timerMode === "rest" ? "#9ee8ff" : "#5f8bff"}
-                gaugeSecondaryColor="rgb(95 139 255 / 0.34)"
+                gaugePrimaryColor={timerMode === "rest" ? "#9ee8ff" : "#00E87A"}
+                gaugeSecondaryColor="rgb(255 255 255 / 18%)"
                 className="timer-progress-ring"
               />
               <div className="timer-display">{formatTimer(timerSeconds)}</div>
@@ -1418,7 +1418,7 @@ export default function App() {
       <GradientBackground />
       <GlassCard className="top-menu-frame app-intro-menu">
         <header className="top-menu" aria-label="Main menu">
-          <div className="menu-title">WorkCycle.</div>
+          <div className="menu-title">WorkCycle</div>
           <div className="settings-area">
             <button
               className="settings-button"
