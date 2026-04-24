@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Pencil, Settings, Trash2 } from "lucide-react";
+import {
+  BarChart3,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  LayoutDashboard,
+  ListTodo,
+  Pencil,
+  Settings,
+  Trash2,
+} from "lucide-react";
 import { AnimatedCircularProgressBar } from "./components/ui/animated-circular-progress-bar";
 import {
   GlassSelect,
@@ -23,10 +35,41 @@ const STORAGE_KEYS = {
 
 const DEFAULT_FOCUS_MINUTES = 25;
 const DEFAULT_BREAK_MINUTES = 5;
-const DEFAULT_CARD_ORDER = ["timer", "tasks", "sessions", "analytics"];
+const DEFAULT_CARD_ORDER = ["tasks", "analytics", "timer", "sessions"];
 
 function cn(...values) {
   return values.filter(Boolean).join(" ");
+}
+
+function formatDashboardDate(date = new Date()) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function calculateSessionStreak(sessions) {
+  if (!sessions.length) return 0;
+
+  const uniqueDays = new Set(
+    sessions.map((session) => {
+      const date = new Date(session.startedAt);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    }),
+  );
+
+  const today = new Date();
+  let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  let streak = 0;
+
+  while (uniqueDays.has(cursor)) {
+    streak += 1;
+    cursor -= 24 * 60 * 60 * 1000;
+  }
+
+  return streak;
 }
 
 function readStoredItems(key) {
@@ -133,22 +176,18 @@ function createSession(name) {
 }
 
 function createAutoSessionName(existingSessions) {
-  const baseName = "new session";
+  const baseName = "session";
   const usedIndices = new Set();
 
   existingSessions.forEach((session) => {
-    const match = session.name?.trim().match(/^new session(?: (\d+))?$/i);
+    const match = session.name?.trim().match(/^session(\d+)$/i);
 
     if (!match) {
       return;
     }
 
-    usedIndices.add(match[1] ? Number(match[1]) : 0);
+    usedIndices.add(Number(match[1]));
   });
-
-  if (!usedIndices.has(0)) {
-    return baseName;
-  }
 
   let nextIndex = 1;
 
@@ -156,7 +195,7 @@ function createAutoSessionName(existingSessions) {
     nextIndex += 1;
   }
 
-  return `${baseName} ${nextIndex}`;
+  return `${baseName}${nextIndex}`;
 }
 
 function formatTimer(totalSeconds) {
@@ -419,6 +458,7 @@ function GlassButton({ className = "", variant = "primary", type = "button", chi
 }
 
 export default function App() {
+  const [activeView, setActiveView] = useState("Dashboard");
   const [tasks, setTasks] = useStoredList(STORAGE_KEYS.tasks);
   const [sessions, setSessions] = useStoredList(STORAGE_KEYS.sessions);
   const [taskText, setTaskText] = useState("");
@@ -440,6 +480,7 @@ export default function App() {
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [editingSessionId, setEditingSessionId] = useState(null);
   const audioContextRef = useRef(null);
   const taskListRef = useRef(null);
   const taskCountRef = useRef(tasks.length);
@@ -448,6 +489,7 @@ export default function App() {
   const taskSwipeRef = useRef({ x: null, y: null, taskId: null });
   const dragStateRef = useRef({ active: false, cardId: null, lastTargetId: null });
   const settingsCloseTimeoutRef = useRef(null);
+  const sessionNameInputRef = useRef(null);
   const activeTask = tasks.find((task) => task.id === activeTaskId);
   const activeSession = sessions.find((session) => session.id === activeSessionId);
   const selectedSession = sessions.find((session) => session.id === selectedSessionId);
@@ -461,6 +503,8 @@ export default function App() {
     .filter((task) => task.seconds > 0)
     .sort((firstTask, secondTask) => secondTask.seconds - firstTask.seconds);
   const selectedSessionIndex = sessions.findIndex((session) => session.id === selectedSessionId);
+  const sessionStreak = calculateSessionStreak(sessions);
+  const dashboardDate = formatDashboardDate();
   const focusDuration = focusMinutes * 60;
   const breakDuration = breakMinutes * 60;
   const timerDuration = timerMode === "rest" ? breakDuration : focusDuration;
@@ -689,6 +733,15 @@ export default function App() {
   }, [layoutEditMode]);
 
   useEffect(() => {
+    if (!editingSessionId) {
+      return;
+    }
+
+    sessionNameInputRef.current?.focus();
+    sessionNameInputRef.current?.select();
+  }, [editingSessionId]);
+
+  useEffect(() => {
     if (sessions.length === 0) {
       if (selectedSessionId !== null) {
         setSelectedSessionId(null);
@@ -719,6 +772,18 @@ export default function App() {
       currentTasks.map((task) => (task.sessionId ? task : { ...task, sessionId: fallbackSessionId })),
     );
   }, [activeSessionId, selectedSessionId, setTasks, tasks]);
+
+  useEffect(() => {
+    const validSessionIds = new Set(sessions.map((session) => session.id));
+
+    setTasks((currentTasks) => {
+      const nextTasks = currentTasks.filter(
+        (task) => !task.sessionId || validSessionIds.has(task.sessionId),
+      );
+
+      return nextTasks.length === currentTasks.length ? currentTasks : nextTasks;
+    });
+  }, [sessions, setTasks]);
 
   useEffect(() => {
     if (!timerRunning || (timerMode === "focus" && !activeTaskId)) {
@@ -1036,12 +1101,8 @@ export default function App() {
   }
 
   function startNewSession(event) {
-    event.preventDefault();
-    const name = sessionName.trim();
-
-    if (!name) {
-      return;
-    }
+    event?.preventDefault?.();
+    const name = "";
 
     const session = createSession(name);
     const nextSessions = [...readStoredItems(STORAGE_KEYS.sessions), session];
@@ -1051,6 +1112,24 @@ export default function App() {
     setActiveSessionId(session.id);
     setSelectedSessionId(session.id);
     setSessionName("");
+    setEditingSessionId(session.id);
+  }
+
+  function commitSessionName(sessionId) {
+    const nextName = sessionName.trim() || createAutoSessionName(sessions);
+
+    setSessions((currentSessions) =>
+      currentSessions.map((session) =>
+        session.id === sessionId
+          ? {
+              ...session,
+              name: nextName,
+            }
+          : session,
+      ),
+    );
+    setSessionName("");
+    setEditingSessionId(null);
   }
 
   function stopSession() {
@@ -1079,7 +1158,20 @@ export default function App() {
       setSelectedSessionId(null);
     }
 
+    if (sessionId === editingSessionId) {
+      setEditingSessionId(null);
+      setSessionName("");
+    }
+
+    if (activeTask?.sessionId === sessionId) {
+      setActiveTaskId(null);
+      setTimerRunning(false);
+      setTimerMode("focus");
+      setTimerSeconds(focusDuration);
+    }
+
     setSessions((currentSessions) => currentSessions.filter((session) => session.id !== sessionId));
+    setTasks((currentTasks) => currentTasks.filter((task) => task.sessionId !== sessionId));
   }
 
   function selectSession(sessionId) {
@@ -1178,7 +1270,7 @@ export default function App() {
   const cardsById = {
     timer: {
       id: "timer",
-      className: "panel-small app-intro-top",
+      className: "panel-small app-intro-bottom",
       content: (
         <section className="panel" aria-labelledby="timer-title">
           <div className="panel-header">
@@ -1190,10 +1282,11 @@ export default function App() {
                 max={timerDuration}
                 min={0}
                 value={timerProgress}
-                gaugePrimaryColor={timerMode === "rest" ? "#9ee8ff" : "#00E87A"}
-                gaugeSecondaryColor="rgb(255 255 255 / 18%)"
+                gaugePrimaryColor={timerMode === "rest" ? "#9ee8ff" : "#5f8bff"}
+                gaugeSecondaryColor="transparent"
                 className="timer-progress-ring"
               />
+              <div className="timer-status">{timerMode === "rest" ? "BREAK TIME" : "FOCUS TIME"}</div>
               <div className="timer-display">{formatTimer(timerSeconds)}</div>
             </div>
             <div className="timer-task">
@@ -1261,6 +1354,11 @@ export default function App() {
               </button>
             </div>
           </form>
+          <div className="task-filter-row" aria-label="Task filters">
+            <button type="button" className="task-filter-pill is-active">All</button>
+            <button type="button" className="task-filter-pill">Today</button>
+            <button type="button" className="task-filter-pill">Upcoming</button>
+          </div>
           <ul ref={taskListRef} className="item-list" aria-label="Saved tasks">
             {visibleTasks.length > 0 ? (
               visibleTasks.map((task) => (
@@ -1304,6 +1402,7 @@ export default function App() {
               </li>
             )}
           </ul>
+          <div className="task-list-meta">{visibleTasks.length} tasks</div>
         </section>
       ),
     },
@@ -1314,83 +1413,108 @@ export default function App() {
         <section className="panel" aria-labelledby="sessions-title">
           <div className="panel-header">
             <h2 id="sessions-title">Sessions</h2>
-          </div>
-          <form className="session-form" onSubmit={startNewSession}>
-            <GlassInput
-              className="glass-input-control glass-input-control-session"
-              type="text"
-              value={sessionName}
-              onChange={(event) => setSessionName(event.target.value)}
-              placeholder="Session name"
-              disabled={layoutEditMode}
-            />
-            <button className="session-action" type="submit" disabled={layoutEditMode}>
+            <button className="session-action" type="button" onClick={startNewSession} disabled={layoutEditMode}>
               New session
             </button>
-          </form>
-          <div className="session-summary">
-            <div onTouchStart={handleSessionSwipeStart} onTouchEnd={handleSessionSwipeEnd}>
-              <div className="session-summary-copy">
-                <strong>{summarySession ? summarySession.name || formatSessionDate(summarySession.startedAt) : "None"}</strong>
-                <em>{formatSpentTime(summarySession?.durationSeconds)}</em>
-              </div>
-              <div className="session-summary-arrows" aria-label="Browse sessions">
-                <button
-                  type="button"
-                  aria-label="Previous session"
-                  onClick={() => moveSelectedSession(-1)}
-                  disabled={sessions.length === 0 || layoutEditMode}
-                >
-                  <ChevronLeft aria-hidden="true" size={16} strokeWidth={3} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next session"
-                  onClick={() => moveSelectedSession(1)}
-                  disabled={sessions.length === 0 || layoutEditMode}
-                >
-                  <ChevronRight aria-hidden="true" size={16} strokeWidth={3} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Delete shown session"
-                  onClick={() => {
-                    if (summarySession) {
-                      removeSession(summarySession.id);
-                    }
-                  }}
-                  disabled={!summarySession || layoutEditMode}
-                >
-                  <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
-                </button>
-              </div>
-            </div>
           </div>
-          {activeSession && selectedSession?.id === activeSessionId ? (
-            <button className="session-stop" type="button" onClick={stopSession} disabled={layoutEditMode}>
-              Stop session
-            </button>
-          ) : null}
-          {selectedSession && selectedSession.id !== activeSessionId ? (
-            <button
-              className="session-continue"
-              type="button"
-              onClick={continueSession}
-              disabled={layoutEditMode}
-            >
-              Continue session
-            </button>
-          ) : null}
+          {summarySession ? (
+            <>
+              <div className="session-summary">
+                <div onTouchStart={handleSessionSwipeStart} onTouchEnd={handleSessionSwipeEnd}>
+                  <div className="session-summary-copy">
+                    {editingSessionId === summarySession.id ? (
+                      <form
+                        className="session-inline-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          commitSessionName(summarySession.id);
+                        }}
+                      >
+                        <GlassInput
+                          ref={sessionNameInputRef}
+                          className="session-name-input"
+                          type="text"
+                          value={sessionName}
+                          onChange={(event) => setSessionName(event.target.value)}
+                          onBlur={() => commitSessionName(summarySession.id)}
+                          placeholder={createAutoSessionName(sessions)}
+                          disabled={layoutEditMode}
+                        />
+                      </form>
+                    ) : (
+                      <strong>{summarySession.name || formatSessionDate(summarySession.startedAt)}</strong>
+                    )}
+                    <em>{formatSpentTime(summarySession?.durationSeconds)}</em>
+                  </div>
+                  <div className="session-summary-arrows" aria-label="Browse sessions">
+                    <button
+                      type="button"
+                      aria-label="Previous session"
+                      onClick={() => moveSelectedSession(-1)}
+                      disabled={sessions.length === 0 || layoutEditMode}
+                    >
+                      <ChevronLeft aria-hidden="true" size={16} strokeWidth={3} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next session"
+                      onClick={() => moveSelectedSession(1)}
+                      disabled={sessions.length === 0 || layoutEditMode}
+                    >
+                      <ChevronRight aria-hidden="true" size={16} strokeWidth={3} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete shown session"
+                      onClick={() => {
+                        if (summarySession) {
+                          removeSession(summarySession.id);
+                        }
+                      }}
+                      disabled={!summarySession || layoutEditMode}
+                    >
+                      <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {activeSession && selectedSession?.id === activeSessionId ? (
+                <button className="session-stop" type="button" onClick={stopSession} disabled={layoutEditMode}>
+                  Stop session
+                </button>
+              ) : null}
+              {selectedSession && selectedSession.id !== activeSessionId ? (
+                <button
+                  className="session-continue"
+                  type="button"
+                  onClick={continueSession}
+                  disabled={layoutEditMode}
+                >
+                  Continue session
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <div className="session-empty-state" aria-live="polite">
+              <Clock3 aria-hidden="true" size={26} strokeWidth={1.8} />
+              <strong>No active session</strong>
+              <span>Start a new session to begin tracking your focus time.</span>
+            </div>
+          )}
         </section>
       ),
     },
     analytics: {
       id: "analytics",
-      className: "panel-half app-intro-bottom",
+      className: "panel-half app-intro-top",
       content: (
         <section className="panel analytics-panel" aria-labelledby="activity-title">
           <div className="panel-header">
             <h2 id="activity-title">Analytics</h2>
+            <button type="button" className="analytics-period-button">
+              This week
+              <ChevronDown aria-hidden="true" size={14} strokeWidth={2} />
+            </button>
           </div>
           <div className="chart-grid chart-grid-empty">
             <div className="chart-mini-card chart-empty-card analytics-card">
@@ -1405,10 +1529,17 @@ export default function App() {
     .map((cardId) => cardsById[cardId])
     .filter(Boolean);
   const boardRows = chunkItems(orderedCards, 2);
+  const sidebarItems = [
+    { label: "Dashboard", icon: LayoutDashboard },
+    { label: "Sessions", icon: Clock3 },
+    { label: "Tasks", icon: ListTodo },
+    { label: "Analytics", icon: BarChart3 },
+    { label: "Settings", icon: Settings },
+  ];
 
   return (
     <main
-      className="app-shell"
+      className="app-shell dashboard-shell"
       aria-label="Pomodoro dashboard"
       style={{
         "--card-transparency": `${cardTransparency}%`,
@@ -1416,10 +1547,50 @@ export default function App() {
       }}
     >
       <GradientBackground />
-      <GlassCard className="top-menu-frame app-intro-menu">
-        <header className="top-menu" aria-label="Main menu">
+      <aside className="dashboard-sidebar" aria-label="Primary navigation">
+        <div className="dashboard-brand">
+          <div className="dashboard-brand-mark" aria-hidden="true">
+            <Clock3 size={16} strokeWidth={2.2} />
+          </div>
           <div className="menu-title">WorkCycle</div>
-          <div className="settings-area">
+        </div>
+        <nav className="dashboard-nav">
+          {sidebarItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className={cn("dashboard-nav-item", activeView === item.label && "is-active")}
+                onClick={() => setActiveView(item.label)}
+              >
+                <Icon aria-hidden="true" size={17} strokeWidth={2.1} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+        <div className="dashboard-streak-card">
+          <div className="dashboard-streak-label">
+            <span className="dashboard-streak-dot" aria-hidden="true" />
+            Current streak
+          </div>
+          <strong>{sessionStreak} days</strong>
+          <div className="dashboard-streak-days" aria-hidden="true">
+            {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+              <span key={`${day}-${index}`} className={index < Math.min(sessionStreak, 7) ? "is-filled" : ""}>
+                {day}
+              </span>
+            ))}
+          </div>
+        </div>
+      </aside>
+      <div className="dashboard-main">
+        <header className="dashboard-header">
+          <div className="dashboard-header-copy">
+            <h1>{activeView}</h1>
+          </div>
+          <div className="dashboard-header-actions">
             <button
               className="settings-button"
               type="button"
@@ -1438,7 +1609,6 @@ export default function App() {
             </button>
           </div>
         </header>
-      </GlassCard>
       {settingsOpen ? (
         <div
           className={`settings-overlay${settingsClosing ? " is-closing" : ""}`}
@@ -1501,24 +1671,29 @@ export default function App() {
           </div>
         </div>
       ) : null}
-      <section className={cn("board", layoutEditMode && "is-layout-editing")} aria-label="Pomodoro board frame">
-        {layoutEditMode ? (
-          <div className="layout-save-overlay">
-            <button type="button" className="layout-save-button" onClick={saveCardLayout}>
-              <Check aria-hidden="true" size={18} strokeWidth={2.8} />
-              <span>Save layout</span>
-            </button>
-          </div>
-        ) : null}
-        {boardRows.map((row, index) => (
-          <div
-            key={`board-row-${index}`}
-            className={cn("board-row", index === 0 ? "board-row-top" : "board-row-bottom")}
-          >
-            {row.map(renderCard)}
-          </div>
-        ))}
-      </section>
+        {activeView === "Dashboard" ? (
+          <section className={cn("board", layoutEditMode && "is-layout-editing")} aria-label="Pomodoro board frame">
+            {layoutEditMode ? (
+              <div className="layout-save-overlay">
+                <button type="button" className="layout-save-button" onClick={saveCardLayout}>
+                  <Check aria-hidden="true" size={18} strokeWidth={2.8} />
+                  <span>Save layout</span>
+                </button>
+              </div>
+            ) : null}
+            {boardRows.map((row, index) => (
+              <div
+                key={`board-row-${index}`}
+                className={cn("board-row", index === 0 ? "board-row-top" : "board-row-bottom")}
+              >
+                {row.map(renderCard)}
+              </div>
+            ))}
+          </section>
+        ) : (
+          <section className="board board-placeholder" aria-label={`${activeView} content`} />
+        )}
+      </div>
     </main>
   );
 }
