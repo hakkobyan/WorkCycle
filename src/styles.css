@@ -17,7 +17,7 @@
   --color-black: #0e0f11;
   --color-purple: #ffffff;
   --color-pink: #ffffff;
-  --color-yellow: #00E87A;
+  --color-yellow: #5f8bff;
   --glow-border-color: rgb(255 255 255 / 36%);
   --animate-first: moveVertical 42s cubic-bezier(0.42, 0, 0.18, 1) infinite;
   --animate-second: moveInCircle 30s cubic-bezier(0.42, 0, 0.18, 1) reverse infinite;
@@ -308,18 +308,35 @@ body {
   user-select: none;
 }
 
-.board-card.is-layout-editing {
-  animation: card-edit-shake 320ms ease-in-out infinite;
+.board-card.is-layout-editing .board-card-frame {
+  animation: card-edit-shake 1.15s ease-in-out infinite;
   transform-origin: center;
 }
 
+.board-card.is-layout-editing {
+  animation: card-edit-shake 1.15s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.board-card.is-layout-editing:nth-child(2n) .board-card-frame {
+  animation-delay: 0.18s;
+}
+
 .board-card.is-layout-editing:nth-child(2n) {
-  animation-delay: 140ms;
+  animation-delay: 0.18s;
 }
 
 .board-card.is-layout-editing.is-dragging {
   opacity: 0.84;
   transform: scale(1.02);
+}
+
+.board-card.is-layout-editing.is-dragging .board-card-frame {
+  animation: none !important;
+}
+
+.board-card.is-layout-editing.is-dragging {
+  animation: none !important;
 }
 
 .board-card.is-layout-editing.is-dragging .panel {
@@ -338,10 +355,10 @@ body {
   justify-content: center;
   min-height: 1.85rem;
   padding: 0 0.65rem;
-  border: 1px solid rgb(255 255 255 / 18%);
+  border: 1px solid rgb(95 139 255 / 0.48);
   border-radius: 999px;
-  background: rgb(255 255 255 / 10%);
-  color: rgb(255 255 255 / 86%);
+  background: rgb(255 255 255 / 0.24);
+  color: #5f8bff;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1964,8 +1981,8 @@ body {
   height: 8px;
   flex: 0 0 auto;
   border-radius: 999px;
-  background: #28e082;
-  box-shadow: 0 0 16px rgb(40 224 130 / 72%);
+  background: #5f8bff;
+  box-shadow: 0 0 16px rgb(95 139 255 / 72%);
   animation: chart-pulse 1.4s ease-in-out infinite;
 }
 
@@ -2786,15 +2803,23 @@ body {
 
 @keyframes card-edit-shake {
   0% {
-    transform: rotate(-1.1deg);
+    transform: translate3d(-1px, 0, 0) rotate(-1.35deg);
+  }
+
+  25% {
+    transform: translate3d(1px, -1px, 0) rotate(1.1deg);
   }
 
   50% {
-    transform: rotate(1.1deg);
+    transform: translate3d(-1px, 1px, 0) rotate(-0.95deg);
+  }
+
+  75% {
+    transform: translate3d(1px, 0, 0) rotate(1.35deg);
   }
 
   100% {
-    transform: rotate(-1.1deg);
+    transform: translate3d(-1px, 0, 0) rotate(-1.35deg);
   }
 }
 
@@ -3093,25 +3118,10 @@ body {
 .app-intro-menu,
 .app-intro-top,
 .app-intro-bottom {
-  animation-duration: 620ms;
-  animation-fill-mode: both;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform, opacity;
-}
-
-.app-intro-menu {
-  animation-name: intro-menu-bounce;
-  animation-delay: 40ms;
-}
-
-.app-intro-top {
-  animation-name: intro-card-rise;
-  animation-delay: 700ms;
-}
-
-.app-intro-bottom {
-  animation-name: intro-card-rise;
-  animation-delay: 1360ms;
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  will-change: auto;
 }
 
 @keyframes intro-menu-bounce {
@@ -3848,56 +3858,96 @@ body,
 .weekly-chart-track,
 .analytics-card .weekly-chart-track {
   border-radius: 8px;
-  background: #1a1f26 !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(95 139 255 / 0.18) 0 2px,
+      transparent 2px 10px
+    ) !important;
   border: 0 !important;
   box-shadow: none !important;
 }
 
 .weekly-chart-bar {
-  background: #00E87A !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(95 139 255 / 0.95) 0 2px,
+      transparent 2px 8px
+    ) !important;
   box-shadow: none !important;
 }
 
 .weekly-chart-column.is-active .weekly-chart-bar {
-  background: #00E87A !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(73 123 255 / 0.98) 0 2px,
+      transparent 2px 8px
+    ) !important;
   box-shadow: none !important;
 }
 
 .weekly-chart-legend span,
 .mini-chart-title span {
-  background: #00E87A !important;
+  background: #5f8bff !important;
   box-shadow: none !important;
   animation: none !important;
 }
 
 .mini-chart-empty {
-  background: #1a1f26 !important;
-  border-color: #252b33 !important;
+  background: rgb(226 238 255 / 0.72) !important;
+  border-color: rgb(95 139 255 / 0.52) !important;
 }
 
 .mini-chart-bar {
-  background: #2c323b !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(95 139 255 / 0.28) 0 2px,
+      transparent 2px 8px
+    ) !important;
 }
 
 .chart-mini-card:hover .mini-chart-bar {
-  background: #38414b !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(95 139 255 / 0.36) 0 2px,
+      transparent 2px 8px
+    ) !important;
 }
 
 .mini-chart-bar.is-hovered {
-  background: #00E87A !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(95 139 255 / 0.95) 0 2px,
+      transparent 2px 8px
+    ) !important;
 }
 
 .mini-chart-bar.is-neighbor {
-  background: #00E87A !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(95 139 255 / 0.72) 0 2px,
+      transparent 2px 8px
+    ) !important;
 }
 
 .mini-chart-bar.is-muted {
-  background: #232830 !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(95 139 255 / 0.16) 0 2px,
+      transparent 2px 8px
+    ) !important;
 }
 
 .mini-chart-tooltip {
-  background: #ffffff !important;
-  color: #0e0f11 !important;
+  background: rgb(227 239 255 / 0.96) !important;
+  color: #224ec5 !important;
 }
 
 .panel,
@@ -3943,14 +3993,10 @@ body,
   overflow: hidden;
 }
 
-.gradient-blinds-canvas {
-  width: 100%;
-  height: 100%;
-}
-
 .app-shell {
   position: relative;
   isolation: isolate;
+  background: transparent !important;
 }
 
 .app-shell > *:not(.ogl-background) {
@@ -3958,12 +4004,17 @@ body,
   z-index: 1;
 }
 
+body,
+#root {
+  background: #ffffff !important;
+}
+
 .analytics-card .weekly-chart-session strong,
 .analytics-card .weekly-chart-scale,
 .analytics-card .weekly-chart-empty,
 .analytics-card .mini-chart-value,
 .analytics-card .mini-chart-tooltip {
-  color: #00E87A !important;
+  color: #5f8bff !important;
 }
 
 .chart-mini-card,
@@ -3981,11 +4032,11 @@ body,
 }
 
 .settings-button svg {
-  color: #00E87A !important;
+  color: #5f8bff !important;
 }
 
 .menu-title {
-  color: #00E87A !important;
+  color: #5f8bff !important;
 }
 
 .layout-save-overlay {
@@ -4000,6 +4051,260 @@ body,
 .layout-save-button {
   pointer-events: auto;
 }
+
+.panel,
+.glass-card-shell,
+.glass-card-shell > .relative.z-10 > .panel,
+.glass-card-shell > .relative.z-10 > .board-card-frame > .panel,
+.session-summary > div,
+.chart-mini-card,
+.analytics-card,
+.item-list li {
+  background: rgb(255 255 255 / 0.2) !important;
+  background-image: none !important;
+  border-style: dashed !important;
+  border-width: 2px !important;
+  border-color: rgb(95 139 255 / 0.78) !important;
+  box-shadow: 0 8px 24px rgb(95 139 255 / 0.08) !important;
+}
+
+.glass-card-shell > .relative.z-10 > .panel,
+.glass-card-shell > .relative.z-10 > .board-card-frame > .panel {
+  border: 0 !important;
+}
+
+.chart-mini-card:hover,
+.item-list li:hover {
+  background: rgb(255 255 255 / 0.28) !important;
+  border-color: rgb(95 139 255 / 0.9) !important;
+}
+
+.top-menu,
+.settings-popup,
+.settings-overlay .settings-popup,
+.entry-row input,
+.entry-row .input-wrapper,
+.session-form input,
+.session-form .input-wrapper,
+.timer-task-select,
+.session-summary-arrows button,
+.session-action,
+.session-stop,
+.session-continue,
+.timer-actions button,
+.item-list button,
+.settings-button,
+.layout-save-button,
+.task-checkbox span {
+  background: rgb(255 255 255 / 0.34) !important;
+  background-image: none !important;
+  border-color: rgb(95 139 255 / 0.9) !important;
+  color: #315fdb !important;
+  box-shadow: 0 6px 18px rgb(95 139 255 / 0.08) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+.panel-header h1,
+.panel-header h2,
+.settings-popup-title,
+.menu-title,
+.timer-display,
+.timer-spent,
+.session-summary strong,
+.session-details-title strong,
+.session-task-list strong,
+.weekly-chart-session strong,
+.weekly-chart-scale,
+.mini-chart-value,
+.mini-chart-tooltip {
+  color: #224ec5 !important;
+}
+
+.panel-header h1,
+.panel-header h2 {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-weight: 700 !important;
+}
+
+.menu-title {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-weight: 700 !important;
+  flex: 0 0 auto !important;
+  min-width: auto !important;
+}
+
+.menu-title,
+.panel-header h1,
+.panel-header h2 {
+  overflow: hidden;
+  white-space: nowrap;
+  width: max-content;
+  max-width: max-content;
+  border-right: 2px solid rgb(95 139 255 / 0.82);
+  animation:
+    heading-type 2.2s steps(24, end) both,
+    heading-caret-fade 2.2s step-end forwards;
+}
+
+.menu-title {
+  animation:
+    heading-type 3.8s steps(34, end) both,
+    heading-caret-fade 3.8s step-end forwards;
+}
+
+.menu-title,
+.panel-header h1,
+.panel-header h2,
+.settings-popup-title {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-right: 0;
+  clip-path: none;
+}
+
+.entry-row input,
+.session-form input,
+.entry-row input::placeholder,
+.session-form input::placeholder,
+.timer-status,
+.timer-rest-label,
+.entry-form label,
+.session-summary-copy,
+.session-summary em,
+.weekly-chart-session span,
+.weekly-chart-column span,
+.mini-chart-title strong,
+.item-list li span,
+.session-list span,
+.timer-setting-control > span,
+.timer-setting-control strong,
+.settings-popup,
+.settings-popup button,
+.settings-button,
+.item-list button,
+.timer-actions button,
+.session-action,
+.session-stop,
+.session-continue {
+  color: #315fdb !important;
+}
+
+.weekly-chart-session span,
+.weekly-chart-column span,
+.mini-chart-title strong,
+.timer-status,
+.timer-rest-label,
+.session-summary-copy,
+.session-summary em,
+.entry-row input::placeholder,
+.session-form input::placeholder {
+  color: rgb(49 95 219 / 0.72) !important;
+}
+
+.entry-row input,
+.session-form input,
+.timer-task-select,
+.settings-popup,
+.settings-popup button,
+.item-list button,
+.timer-actions button,
+.session-action,
+.session-stop,
+.session-continue,
+.settings-button,
+.layout-save-button {
+  font-weight: 500 !important;
+}
+
+.panel-header h1::after,
+.panel-header h2::after {
+  filter: hue-rotate(195deg) saturate(1.2) brightness(0.95);
+}
+
+@keyframes heading-type {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes heading-caret-fade {
+  0%,
+  85% {
+    border-right-color: rgb(95 139 255 / 0.82);
+  }
+
+  100% {
+    border-right-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-title,
+  .panel-header h1,
+  .panel-header h2 {
+    width: auto;
+    border-right: 0;
+    animation: none;
+  }
+}
+
+
+.analytics-card,
+.chart-mini-card.analytics-card {
+  border: 2px solid rgb(95 139 255 / 0.9) !important;
+}
+
+.entry-row button {
+  background: transparent !important;
+  border: 2px solid rgb(95 139 255 / 0.9) !important;
+  color: #315fdb !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.settings-overlay {
+  background: rgb(210 228 255 / 0.34) !important;
+}
+
+.settings-overlay .settings-popup {
+  background: rgb(236 244 255 / 0.88) !important;
+  box-shadow:
+    0 24px 80px rgb(95 139 255 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.65) !important;
+}
+
+.settings-overlay .settings-popup button,
+.settings-overlay .settings-popup .settings-action-button,
+.settings-overlay .settings-popup [data-slot="slider-track"],
+.settings-overlay .settings-popup [data-slot="slider-thumb"],
+.settings-overlay .settings-popup .glass-input-control,
+.settings-overlay .settings-popup .glass-input-control-session {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 2px dashed rgb(95 139 255 / 0.88) !important;
+  box-shadow: none !important;
+}
+
+.settings-overlay .settings-popup [data-slot="slider-range"] {
+  background: rgb(95 139 255 / 0.72) !important;
+}
+
+.settings-overlay .settings-popup .bg-\[\#0e0f11\] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 2px dashed rgb(95 139 255 / 0.88) !important;
+  box-shadow: none !important;
+}
+
 
 body,
 button,
@@ -4082,9 +4387,9 @@ label,
   align-items: center !important;
   justify-content: center !important;
   padding: 1.25rem !important;
-  background: rgb(8 8 10 / 0.42) !important;
-  backdrop-filter: blur(18px) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+  background: rgb(210 228 255 / 0.24) !important;
+  backdrop-filter: blur(22px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(135%) !important;
 }
 
 .settings-overlay .settings-popup {
@@ -4099,15 +4404,15 @@ label,
   overflow: auto;
   transform: translate(-50%, -50%) !important;
   padding: 1.25rem !important;
-  border: 1px solid rgb(255 255 255 / 0.18) !important;
+  border: 2px dashed rgb(95 139 255 / 0.92) !important;
   border-radius: 16px !important;
-  background: rgb(14 15 17 / 0.76) !important;
+  background: rgb(236 244 255 / 0.42) !important;
   background-image: none !important;
   box-shadow:
-    0 24px 80px rgb(0 0 0 / 0.42),
-    inset 0 1px 0 rgb(255 255 255 / 0.08) !important;
-  backdrop-filter: blur(24px) saturate(145%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+    0 24px 80px rgb(95 139 255 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.42) !important;
+  backdrop-filter: blur(28px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(145%) !important;
 }
 
 .settings-overlay .settings-popup::before,
