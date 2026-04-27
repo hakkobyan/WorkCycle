@@ -1,1 +1,7 @@
 node_modules
+.env
+.env.*
+vite-ai-generator.log
+vite-ai-generator.err.log
+codex-api.log
+codex-api.err.log

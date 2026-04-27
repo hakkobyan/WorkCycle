@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node server/dev-with-codex.mjs",
+    "dev:ui": "vite",
+    "dev:codex-api": "node server/codex-api.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

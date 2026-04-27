@@ -5263,6 +5263,137 @@ label,
   min-height: 15rem;
 }
 
+.ai-generator-view {
+  display: grid;
+  gap: 1rem;
+}
+
+.ai-generator-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.ai-generator-stat {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, rgb(79 119 255 / 0.12), rgb(17 191 160 / 0.06)),
+    rgb(19 19 23 / 0.94);
+}
+
+.ai-generator-stat span,
+.ai-suggestion-card span,
+.ai-generator-label {
+  color: rgb(255 255 255 / 0.56);
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.ai-generator-stat strong,
+.ai-suggestion-card strong {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.ai-generator-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.ai-generator-panel {
+  min-height: 24rem;
+}
+
+.ai-generator-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ai-generator-input {
+  width: 100%;
+}
+
+.ai-generator-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ai-generator-hint,
+.ai-generator-error {
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.ai-generator-hint {
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(255 255 255 / 0.03);
+  color: rgb(255 255 255 / 0.64);
+}
+
+.ai-generator-error {
+  border: 1px solid rgb(255 93 122 / 0.22);
+  background: rgb(255 93 122 / 0.08);
+  color: rgb(255 197 208);
+}
+
+.ai-generator-output {
+  display: grid;
+  align-content: start;
+  min-height: 11rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px dashed rgb(255 255 255 / 0.1);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 0.03);
+  color: #eef2ff;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.ai-generator-suggestions {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.ai-suggestion-card {
+  display: grid;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 0.03);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.ai-suggestion-card:hover {
+  transform: translateY(-1px);
+  border-color: rgb(110 158 255 / 0.34);
+  background: rgb(79 119 255 / 0.08);
+}
+
+.ai-suggestion-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+
 .tasks-view {
   display: grid;
   gap: 1rem;
@@ -5491,6 +5622,8 @@ label,
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .ai-generator-summary,
+  .ai-generator-grid,
   .analytics-summary-grid,
   .analytics-detail-grid {
     grid-template-columns: 1fr;

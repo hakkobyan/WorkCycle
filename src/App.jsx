@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   BarChart3,
+  Bot,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -200,6 +201,35 @@ function createAutoSessionName(existingSessions) {
   }
 
   return `${baseName}${nextIndex}`;
+}
+
+function cleanGeneratedTaskTitle(value, fallbackIndex) {
+  const nextValue = String(value ?? "")
+    .replace(/^\s*[-*]\s*/, "")
+    .replace(/^\s*\d+[\).\s-]+/, "")
+    .trim();
+
+  return nextValue || `Task ${fallbackIndex + 1}`;
+}
+
+function normalizeAiPlan(payload) {
+  const sessionName = String(payload?.sessionName ?? "").trim();
+  const tasks = Array.isArray(payload?.tasks)
+    ? payload.tasks
+        .map((task, index) => cleanGeneratedTaskTitle(task?.title, index))
+        .filter(Boolean)
+    : [];
+  const outcome = String(payload?.outcome ?? "").trim();
+
+  if (!sessionName || tasks.length === 0) {
+    throw new Error("The AI response did not include a usable session name and task list.");
+  }
+
+  return {
+    sessionName,
+    tasks,
+    outcome,
+  };
 }
 
 function formatTimer(totalSeconds) {
@@ -502,6 +532,10 @@ export default function App() {
   const [tasks, setTasks] = useStoredList(STORAGE_KEYS.tasks);
   const [sessions, setSessions] = useStoredList(STORAGE_KEYS.sessions);
   const [taskText, setTaskText] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiResult, setAiResult] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
   const [sessionName, setSessionName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
@@ -981,6 +1015,60 @@ export default function App() {
 
     setTasks((currentTasks) => [...currentTasks, createItem(text, activeSessionId)]);
     setTaskText("");
+  }
+
+  async function generateAiSessionPlan() {
+    const prompt = aiPrompt.trim();
+
+    if (!prompt || aiLoading) {
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError("");
+    setAiResult("Generating session and tasks with Codex...");
+
+    try {
+      const response = await fetch("/api/generate-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      });
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData?.error || "Codex request failed.");
+      }
+
+      const parsedPlan = normalizeAiPlan(responseData?.plan);
+      const nextSession = createSession(parsedPlan.sessionName);
+      const nextTasks = parsedPlan.tasks.map((taskTitle) => createItem(taskTitle, nextSession.id));
+
+      setSessions((currentSessions) => [...currentSessions, nextSession]);
+      setTasks((currentTasks) => [...currentTasks, ...nextTasks]);
+      setActiveSessionId(nextSession.id);
+      setSelectedSessionId(nextSession.id);
+      setActiveTaskId(nextTasks[0]?.id ?? null);
+      setTimerRunning(false);
+      setTimerMode("focus");
+      setTimerSeconds(focusDuration);
+      setAiResult(
+        [
+          `Session created: ${parsedPlan.sessionName}`,
+          "",
+          ...parsedPlan.tasks.map((taskTitle, index) => `${index + 1}. ${taskTitle}`),
+          "",
+          `Outcome: ${parsedPlan.outcome}`,
+        ].join("\n"),
+      );
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : "Failed to generate a session plan.");
+      setAiResult("");
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   function removeTask(taskId) {
@@ -1669,6 +1757,7 @@ export default function App() {
     { label: "Sessions", icon: Clock3 },
     { label: "Tasks", icon: ListTodo },
     { label: "Analytics", icon: BarChart3 },
+    { label: "AI GENERATOR", icon: Bot },
   ];
 
   return (
@@ -2043,6 +2132,98 @@ export default function App() {
                     <span>Total tasks</span>
                     <strong>{tasks.length}</strong>
                   </article>
+                </div>
+              </section>
+            </div>
+          </section>
+        ) : activeView === "AI GENERATOR" ? (
+          <section className="ai-generator-view" aria-label="AI generator workspace">
+            <div className="ai-generator-summary">
+              <article className="ai-generator-stat">
+                <span>Open tasks</span>
+                <strong>{allTaskClasses[0].items.length}</strong>
+              </article>
+              <article className="ai-generator-stat">
+                <span>Total sessions</span>
+                <strong>{sessions.length}</strong>
+              </article>
+              <article className="ai-generator-stat">
+                <span>Provider</span>
+                <strong>Codex</strong>
+              </article>
+            </div>
+            <div className="ai-generator-grid">
+              <section className="panel ai-generator-panel" aria-labelledby="ai-generator-title">
+                <div className="panel-header">
+                  <h2 id="ai-generator-title">Prompt Builder</h2>
+                  <div className="analytics-summary-label">Creates session + tasks via Codex</div>
+                </div>
+                <div className="ai-generator-form">
+                  <label className="ai-generator-label" htmlFor="ai-generator-input">
+                    Describe what you want to achieve
+                  </label>
+                  <GlassInput
+                    id="ai-generator-input"
+                    className="ai-generator-input"
+                    type="text"
+                    value={aiPrompt}
+                    onChange={(event) => setAiPrompt(event.target.value)}
+                    placeholder="Example: Create Landing website"
+                  />
+                  <div className="ai-generator-actions">
+                    <GlassButton
+                      onClick={generateAiSessionPlan}
+                      disabled={aiLoading || !aiPrompt.trim()}
+                    >
+                      {aiLoading ? "Generating..." : "Generate"}
+                    </GlassButton>
+                    <GlassButton
+                      variant="ghost"
+                      disabled={aiLoading}
+                      onClick={() => {
+                        setAiPrompt("");
+                        setAiResult("");
+                        setAiError("");
+                      }}
+                    >
+                      Clear
+                    </GlassButton>
+                  </div>
+                  <div className="ai-generator-hint">
+                    Uses your local Codex CLI session to generate a focused plan for this goal.
+                  </div>
+                  {aiError ? <div className="ai-generator-error">{aiError}</div> : null}
+                </div>
+                <div className="ai-generator-output" aria-live="polite">
+                  {aiResult || "Your generated session and task list will appear here."}
+                </div>
+              </section>
+              <section className="panel ai-generator-panel" aria-labelledby="ai-suggestions-title">
+                <div className="panel-header">
+                  <h2 id="ai-suggestions-title">Quick Ideas</h2>
+                  <div className="analytics-summary-label">Suggested prompts</div>
+                </div>
+                <div className="ai-generator-suggestions">
+                  {[
+                    "Create Landing website",
+                    "Build onboarding flow for mobile app",
+                    "Prepare pitch deck for investors",
+                  ].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className="ai-suggestion-card"
+                      disabled={aiLoading}
+                      onClick={() => {
+                        setAiPrompt(suggestion);
+                        setAiResult("");
+                        setAiError("");
+                      }}
+                    >
+                      <strong>{suggestion}</strong>
+                      <span>Use this goal to generate a focused session</span>
+                    </button>
+                  ))}
                 </div>
               </section>
             </div>

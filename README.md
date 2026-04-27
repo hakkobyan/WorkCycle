@@ -56,3 +56,28 @@ The goal is simple:
 
 *(replace with your actual stack if needed)*
 
+---
+
+## AI Generator Setup
+
+The `AI GENERATOR` page can turn a goal like `Create Landing website` into:
+
+- a new Codex-generated session name
+- a matching task list added to that session
+
+### Local setup
+
+1. Make sure the local `codex` CLI is installed and logged in
+2. Run `npm run dev`
+3. Open the app and use the `AI GENERATOR` page
+
+### How it works
+
+The website calls a local API server at `/api/generate-plan`.
+That server runs `codex exec` with a JSON schema and returns:
+
+- a short session name
+- an ordered task list
+- the intended outcome
+
+No OpenAI API key is needed in the frontend for this mode.
