@@ -4509,7 +4509,7 @@ label,
 
 .dashboard-brand .menu-title {
   color: #ffffff !important;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -5010,7 +5010,7 @@ label,
 .dashboard-header-copy h1 {
   margin: 0;
   color: #ffffff;
-  font-size: clamp(2rem, 4vw, 2.35rem);
+  font-size: 2.1rem;
   font-weight: 700;
   letter-spacing: -0.04em;
 }
@@ -5650,6 +5650,106 @@ label,
   min-height: 15rem;
 }
 
+.overall-view {
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+  padding-bottom: 0.15rem;
+}
+
+.overall-story-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.9fr);
+  gap: 1rem;
+}
+
+.overall-story-panel,
+.overall-next-panel,
+.overall-hero-panel {
+  min-height: 0;
+  background: rgb(19 19 23 / 0.94) !important;
+}
+
+.overall-story-copy,
+.overall-next-copy {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.overall-story-copy strong,
+.overall-next-copy strong {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.overall-story-copy p,
+.overall-next-copy span {
+  margin: 0;
+  color: rgb(255 255 255 / 0.68);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.overall-bubble span {
+  color: rgb(255 255 255 / 0.56);
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.overall-hero-panel {
+  min-height: 28rem;
+}
+
+.overall-bubbles {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+  align-content: start;
+}
+
+.overall-bubble {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.1rem;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  border-radius: 1.4rem;
+  background: rgb(19 19 23 / 0.94);
+  min-height: 10rem;
+}
+
+.overall-bubble p {
+  margin: 0;
+  color: #f7f8fb;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+.overall-bubble-primary {
+  grid-column: span 5;
+}
+
+.overall-bubble-accent {
+  grid-column: span 4;
+}
+
+.overall-bubble-success {
+  grid-column: span 3;
+}
+
+.overall-bubble-secondary {
+  grid-column: span 3;
+}
+
+.overall-bubble-warning {
+  grid-column: span 5;
+}
+
+.overall-bubble-neutral {
+  grid-column: span 4;
+}
+
 .ai-generator-view {
   display: grid;
   gap: 1rem;
@@ -6152,15 +6252,26 @@ label,
 }
 
 @media (max-width: 640px) {
+  .overall-story-grid,
   .sessions-grid-view {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .overall-bubbles,
   .ai-generator-summary,
   .ai-generator-grid,
   .analytics-summary-grid,
   .analytics-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .overall-bubble-primary,
+  .overall-bubble-accent,
+  .overall-bubble-success,
+  .overall-bubble-secondary,
+  .overall-bubble-warning,
+  .overall-bubble-neutral {
+    grid-column: auto;
   }
 
   .tasks-view-summary {

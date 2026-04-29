@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   BarChart3,
   Bot,
@@ -354,6 +354,112 @@ function buildRecentActivityData(sessions) {
   return days;
 }
 
+function getTimeOfDayLabel(hours) {
+  if (hours < 6) return "late night";
+  if (hours < 12) return "morning";
+  if (hours < 17) return "afternoon";
+  if (hours < 21) return "evening";
+  return "night";
+}
+
+function buildOverallInsights({
+  sessions,
+  tasks,
+  totalFocusSeconds,
+  completedTaskCount,
+  completionRate,
+  sessionStreak,
+  topTaskAnalytics,
+}) {
+  if (sessions.length === 0 && tasks.length === 0) {
+    return [
+      {
+        id: "overall-empty",
+        tone: "primary",
+        title: "No activity yet",
+        body:
+          "Start a session or finish a few tasks and this space will turn your work history into an AI-style summary.",
+      },
+    ];
+  }
+
+  const weekdayTotals = new Map();
+  const timeOfDayTotals = new Map();
+
+  sessions.forEach((session) => {
+    const date = new Date(session.startedAt);
+    const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(date);
+    const timeOfDay = getTimeOfDayLabel(date.getHours());
+    const seconds = session.durationSeconds ?? 0;
+
+    weekdayTotals.set(weekday, (weekdayTotals.get(weekday) ?? 0) + seconds);
+    timeOfDayTotals.set(timeOfDay, (timeOfDayTotals.get(timeOfDay) ?? 0) + seconds);
+  });
+
+  const bestWeekdayEntry =
+    [...weekdayTotals.entries()].sort((firstDay, secondDay) => secondDay[1] - firstDay[1])[0] ?? null;
+  const bestTimeOfDayEntry =
+    [...timeOfDayTotals.entries()].sort((firstSlot, secondSlot) => secondSlot[1] - firstSlot[1])[0] ?? null;
+  const longestSession =
+    [...sessions].sort(
+      (firstSession, secondSession) => (secondSession.durationSeconds ?? 0) - (firstSession.durationSeconds ?? 0),
+    )[0] ?? null;
+  const latestSession =
+    [...sessions].sort(
+      (firstSession, secondSession) =>
+        new Date(secondSession.startedAt).getTime() - new Date(firstSession.startedAt).getTime(),
+    )[0] ?? null;
+  const openTasks = tasks.filter((task) => !(task.completed ?? false));
+  const topTask = topTaskAnalytics[0] ?? null;
+
+  return [
+    {
+      id: "overall-focus",
+      tone: "primary",
+      title: "Focus pattern",
+      body: bestTimeOfDayEntry
+        ? `You do your best work in the ${bestTimeOfDayEntry[0]}. That's when you logged ${formatSpentTime(bestTimeOfDayEntry[1])} of focused time.`
+        : `You have logged ${formatSpentTime(totalFocusSeconds)} of focus time so far.`,
+    },
+    {
+      id: "overall-weekday",
+      tone: "accent",
+      title: "Strongest day",
+      body: bestWeekdayEntry
+        ? `${bestWeekdayEntry[0]} has been your most productive day with ${formatSpentTime(bestWeekdayEntry[1])} tracked across your sessions.`
+        : "Your strongest workday will appear here once more sessions are tracked.",
+    },
+    {
+      id: "overall-tasks",
+      tone: "success",
+      title: "Execution snapshot",
+      body: `You completed ${completedTaskCount} of ${tasks.length} tasks, which puts your completion rate at ${completionRate}%. ${openTasks.length > 0 ? `${openTasks.length} task${openTasks.length === 1 ? "" : "s"} still need attention.` : "Everything is currently wrapped up."}`,
+    },
+    {
+      id: "overall-top-task",
+      tone: "secondary",
+      title: "Main time sink",
+      body: topTask
+        ? `"${topTask.text}" received the most attention with ${formatSpentTime(topTask.focusSeconds ?? 0)} of tracked focus.`
+        : "No individual task has enough tracked focus time yet.",
+    },
+    {
+      id: "overall-session",
+      tone: "warning",
+      title: "Session story",
+      body: longestSession
+        ? `Your longest session was ${formatSpentTime(longestSession.durationSeconds ?? 0)} on ${formatSessionDate(longestSession.startedAt)}${longestSession.name ? `, saved as "${longestSession.name}"` : ""}.`
+        : "Your longest session will show up here once you start tracking sessions.",
+    },
+    {
+      id: "overall-momentum",
+      tone: "neutral",
+      title: "Momentum",
+      body: `${sessionStreak > 0 ? `You're on a ${sessionStreak}-day streak.` : "You don't have a streak yet."} ${latestSession ? `Your latest recorded session was ${formatSessionDate(latestSession.startedAt)}.` : ""}`,
+    },
+  ];
+}
+
 function MiniChart({ data }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [displayValue, setDisplayValue] = useState(null);
@@ -593,6 +699,7 @@ export default function App() {
   const dragStateRef = useRef({ active: false, cardId: null, lastTargetId: null });
   const settingsCloseTimeoutRef = useRef(null);
   const sessionNameInputRef = useRef(null);
+  const dashboardMainRef = useRef(null);
   const activeTask = tasks.find((task) => task.id === activeTaskId);
   const activeSession = sessions.find((session) => session.id === activeSessionId);
   const selectedSession = sessions.find((session) => session.id === selectedSessionId);
@@ -702,6 +809,31 @@ export default function App() {
       items: allTasksOverview.filter((task) => task.completed),
     },
   ];
+  const overallInsights = buildOverallInsights({
+    sessions,
+    tasks,
+    totalFocusSeconds,
+    completedTaskCount,
+    completionRate,
+    sessionStreak,
+    topTaskAnalytics,
+  });
+  const nextOpenTask = allTaskClasses[0].items[0] ?? null;
+  const overallStory =
+    sessions.length > 0
+      ? `You've tracked ${formatSpentTime(totalFocusSeconds)} across ${sessions.length} session${sessions.length === 1 ? "" : "s"}. ${completedTaskCount > 0 ? `You also finished ${completedTaskCount} task${completedTaskCount === 1 ? "" : "s"}.` : "You're still building momentum with your tasks."}`
+      : "You have not tracked enough work yet for a deep summary, but this page will get smarter as you use the timer and complete tasks.";
+  const overallNextStep = nextOpenTask
+    ? `Best next step: continue "${nextOpenTask.text}".`
+    : "Best next step: start a new focused task to build your next insight.";
+
+  function resetDashboardScroll() {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    dashboardMainRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }
+
   useEffect(() => {
     function syncPointer(event) {
       const xp = (event.clientX / window.innerWidth).toFixed(2);
@@ -767,6 +899,20 @@ export default function App() {
       }
     };
   }, []);
+
+  useLayoutEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    resetDashboardScroll();
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
+  useEffect(() => {
+    resetDashboardScroll();
+  }, [activeView]);
 
   useEffect(() => {
     if (!activeSessionId) {
@@ -1937,6 +2083,7 @@ export default function App() {
     { label: "Tasks", icon: ListTodo },
     { label: "Analytics", icon: BarChart3 },
     { label: "AI Generator", icon: Bot },
+    { label: "Overall", icon: LayoutDashboard },
     { label: "Dashboard", icon: LayoutDashboard },
   ];
 
@@ -1986,7 +2133,7 @@ export default function App() {
           </div>
         </div>
       </aside>
-      <div className="dashboard-main">
+      <div ref={dashboardMainRef} className="dashboard-main">
         <header className={cn("dashboard-header", activeView === "Timer" && "dashboard-header-timer")}>
           <div className="dashboard-header-copy">
             <h1>{activeView}</h1>
@@ -2279,6 +2426,52 @@ export default function App() {
               ))}
             </div>
           </section>
+        ) : activeView === "Overall" ? (
+          <section className="overall-view" aria-label="Overall activity summary">
+            <div className="overall-story-grid">
+              <section className="panel overall-story-panel" aria-labelledby="overall-story-title">
+                <div className="panel-header">
+                  <h2 id="overall-story-title">Your work, explained simply</h2>
+                  <div className="analytics-summary-label">Friendly AI summary</div>
+                </div>
+                <div className="overall-story-copy">
+                  <strong>What happened</strong>
+                  <p>{overallStory}</p>
+                </div>
+              </section>
+              <section className="panel overall-next-panel" aria-labelledby="overall-next-title">
+                <div className="panel-header">
+                  <h2 id="overall-next-title">What to do next</h2>
+                  <div className="analytics-summary-label">Suggested focus</div>
+                </div>
+                <div className="overall-next-copy">
+                  <strong>{overallNextStep}</strong>
+                  <span>
+                    {nextOpenTask
+                      ? `It is the first open task in your list and a good place to pick back up.`
+                      : "Once you start the next task, this page will turn that activity into better suggestions."}
+                  </span>
+                </div>
+              </section>
+            </div>
+            <section className="panel overall-hero-panel" aria-labelledby="overall-hero-title">
+              <div className="panel-header">
+                <h2 id="overall-hero-title">What AI noticed</h2>
+                <div className="analytics-summary-label">Based on your tracked history</div>
+              </div>
+              <div className="overall-bubbles">
+                {overallInsights.map((insight) => (
+                  <article
+                    key={insight.id}
+                    className={cn("overall-bubble", `overall-bubble-${insight.tone}`)}
+                  >
+                    <span>{insight.title}</span>
+                    <p>{insight.body}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </section>
         ) : activeView === "Analytics" ? (
           <section className="analytics-view" aria-label="Whole activity analytics">
             <div className="analytics-summary-grid">
@@ -2370,7 +2563,7 @@ export default function App() {
               </section>
             </div>
           </section>
-        ) : activeView === "AI GENERATOR" ? (
+        ) : activeView === "AI Generator" ? (
           <section className="ai-generator-view" aria-label="AI generator workspace">
             <div className="ai-generator-summary">
               <article className="ai-generator-stat">
