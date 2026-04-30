@@ -10,6 +10,7 @@ import {
   Clock3,
   LayoutDashboard,
   ListTodo,
+  Menu,
   Plus,
   Pencil,
   Pause,
@@ -17,6 +18,7 @@ import {
   RotateCcw,
   Settings,
   Trash2,
+  X,
 } from "lucide-react";
 import { AnimatedCircularProgressBar } from "./components/ui/animated-circular-progress-bar";
 import {
@@ -671,6 +673,7 @@ export default function App() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
   const [sessionName, setSessionName] = useState("");
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
   const [focusMinutes, setFocusMinutes] = useState(DEFAULT_FOCUS_MINUTES);
@@ -833,6 +836,18 @@ export default function App() {
     document.body.scrollTop = 0;
     dashboardMainRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
+
+  useEffect(() => {
+    function syncNavMenuWithViewport() {
+      if (window.innerWidth > 1080) {
+        setNavMenuOpen(false);
+      }
+    }
+
+    syncNavMenuWithViewport();
+    window.addEventListener("resize", syncNavMenuWithViewport);
+    return () => window.removeEventListener("resize", syncNavMenuWithViewport);
+  }, []);
 
   useEffect(() => {
     function syncPointer(event) {
@@ -1791,6 +1806,25 @@ export default function App() {
             <Pause aria-hidden="true" size={24} strokeWidth={2.4} />
           </button>
         </div>
+        {!compact ? (
+          <div className="timer-overall-block" aria-label="AI summary">
+            <div className="timer-overall-story">
+              <strong>{overallNextStep}</strong>
+              <span>{overallStory}</span>
+            </div>
+            <div className="timer-overall-bubbles">
+              {overallInsights.slice(0, 3).map((insight) => (
+                <article
+                  key={insight.id}
+                  className={cn("timer-overall-bubble", `timer-overall-bubble-${insight.tone}`)}
+                >
+                  <span>{insight.title}</span>
+                  <p>{insight.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
       </section>
     );
@@ -2083,7 +2117,6 @@ export default function App() {
     { label: "Tasks", icon: ListTodo },
     { label: "Analytics", icon: BarChart3 },
     { label: "AI Generator", icon: Bot },
-    { label: "Overall", icon: LayoutDashboard },
     { label: "Dashboard", icon: LayoutDashboard },
   ];
 
@@ -2097,39 +2130,78 @@ export default function App() {
       }}
     >
       <GradientBackground />
-      <aside className="dashboard-sidebar" aria-label="Primary navigation">
-        <div className="dashboard-brand">
-          <div className="dashboard-brand-mark" aria-hidden="true">
-            <Clock3 size={16} strokeWidth={2.2} />
+      <aside className={cn("dashboard-sidebar", navMenuOpen && "is-nav-open")} aria-label="Primary navigation">
+        <div className="dashboard-sidebar-head">
+          <div className="dashboard-brand">
+            <div className="dashboard-brand-mark" aria-hidden="true">
+              <Clock3 size={16} strokeWidth={2.2} />
+            </div>
+            <div className="menu-title">WorkCycle</div>
           </div>
-          <div className="menu-title">WorkCycle</div>
+          <button
+            type="button"
+            className="dashboard-menu-toggle"
+            aria-label={navMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={navMenuOpen}
+            aria-controls="dashboard-navigation"
+            onClick={() => setNavMenuOpen((currentValue) => !currentValue)}
+          >
+            {navMenuOpen ? (
+              <X aria-hidden="true" size={18} strokeWidth={2.4} />
+            ) : (
+              <Menu aria-hidden="true" size={18} strokeWidth={2.4} />
+            )}
+          </button>
         </div>
-        <nav className="dashboard-nav">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.label}
-                type="button"
-                className={cn("dashboard-nav-item", activeView === item.label && "is-active")}
-                onClick={() => setActiveView(item.label)}
-              >
-                <Icon aria-hidden="true" size={17} strokeWidth={2.1} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-        <div className="dashboard-streak-card dashboard-section-card">
-          <div className="dashboard-streak-label">
-            <span className="dashboard-streak-dot" aria-hidden="true" />
-            Current session
-          </div>
-          <strong>{summarySession?.name || (summarySession ? formatSessionDate(summarySession.startedAt) : "No session")}</strong>
-          <div className="dashboard-section-copy">
-            {summarySession
-              ? `${formatSpentTime(summarySession.durationSeconds ?? 0)} tracked`
-              : "Start or continue a session to track focus time"}
+        <div className="dashboard-sidebar-panel">
+          <nav id="dashboard-navigation" className="dashboard-nav">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  className={cn("dashboard-nav-item", activeView === item.label && "is-active")}
+                  onClick={() => {
+                    setActiveView(item.label);
+                    setNavMenuOpen(false);
+                  }}
+                >
+                  <Icon aria-hidden="true" size={17} strokeWidth={2.1} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+          <div className="dashboard-sidebar-utility-row">
+            <button
+              className="dashboard-menu-settings"
+              type="button"
+              aria-label="Settings"
+              onClick={() => {
+                setNavMenuOpen(false);
+                if (settingsOpen) {
+                  closeSettings();
+                } else {
+                  openSettings();
+                }
+              }}
+            >
+              <Settings aria-hidden="true" size={18} strokeWidth={2.4} />
+              <span>Settings</span>
+            </button>
+            <div className="dashboard-streak-card dashboard-section-card">
+              <div className="dashboard-streak-label">
+                <span className="dashboard-streak-dot" aria-hidden="true" />
+                Current session
+              </div>
+              <strong>{summarySession?.name || (summarySession ? formatSessionDate(summarySession.startedAt) : "No session")}</strong>
+              <div className="dashboard-section-copy">
+                {summarySession
+                  ? `${formatSpentTime(summarySession.durationSeconds ?? 0)} tracked`
+                  : "Start or continue a session to track focus time"}
+              </div>
+            </div>
           </div>
         </div>
       </aside>
@@ -2192,7 +2264,7 @@ export default function App() {
               </>
             ) : null}
             <button
-              className="settings-button"
+              className="settings-button dashboard-header-settings"
               type="button"
               aria-label="Settings"
               aria-expanded={settingsOpen}
@@ -2425,52 +2497,6 @@ export default function App() {
                 </section>
               ))}
             </div>
-          </section>
-        ) : activeView === "Overall" ? (
-          <section className="overall-view" aria-label="Overall activity summary">
-            <div className="overall-story-grid">
-              <section className="panel overall-story-panel" aria-labelledby="overall-story-title">
-                <div className="panel-header">
-                  <h2 id="overall-story-title">Your work, explained simply</h2>
-                  <div className="analytics-summary-label">Friendly AI summary</div>
-                </div>
-                <div className="overall-story-copy">
-                  <strong>What happened</strong>
-                  <p>{overallStory}</p>
-                </div>
-              </section>
-              <section className="panel overall-next-panel" aria-labelledby="overall-next-title">
-                <div className="panel-header">
-                  <h2 id="overall-next-title">What to do next</h2>
-                  <div className="analytics-summary-label">Suggested focus</div>
-                </div>
-                <div className="overall-next-copy">
-                  <strong>{overallNextStep}</strong>
-                  <span>
-                    {nextOpenTask
-                      ? `It is the first open task in your list and a good place to pick back up.`
-                      : "Once you start the next task, this page will turn that activity into better suggestions."}
-                  </span>
-                </div>
-              </section>
-            </div>
-            <section className="panel overall-hero-panel" aria-labelledby="overall-hero-title">
-              <div className="panel-header">
-                <h2 id="overall-hero-title">What AI noticed</h2>
-                <div className="analytics-summary-label">Based on your tracked history</div>
-              </div>
-              <div className="overall-bubbles">
-                {overallInsights.map((insight) => (
-                  <article
-                    key={insight.id}
-                    className={cn("overall-bubble", `overall-bubble-${insight.tone}`)}
-                  >
-                    <span>{insight.title}</span>
-                    <p>{insight.body}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
           </section>
         ) : activeView === "Analytics" ? (
           <section className="analytics-view" aria-label="Whole activity analytics">
