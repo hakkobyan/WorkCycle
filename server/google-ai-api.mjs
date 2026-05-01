@@ -1,7 +1,16 @@
 import { createServer } from "node:http";
+import { GoogleGenAI } from "@google/genai";
 
 const PORT = Number(process.env.PORT || 8787);
-const MODEL = process.env.GOOGLE_AI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GOOGLE_AI_MODEL || process.env.VERTEX_AI_MODEL || "gemini-2.5-flash";
+const PROJECT_ID =
+  process.env.GOOGLE_CLOUD_PROJECT ||
+  process.env.GCLOUD_PROJECT ||
+  process.env.GCP_PROJECT;
+const LOCATION =
+  process.env.GOOGLE_CLOUD_LOCATION ||
+  process.env.VERTEX_AI_LOCATION ||
+  "us-central1";
 const API_KEY =
   process.env.GOOGLE_API_KEY ||
   process.env.GEMINI_API_KEY ||
@@ -77,66 +86,47 @@ function buildInstruction(prompt) {
   ].join("\n");
 }
 
-async function runGooglePlan(prompt) {
-  if (!API_KEY) {
+function getGenAIClient() {
+  if (API_KEY) {
+    return new GoogleGenAI({
+      apiKey: API_KEY,
+      vertexai: true,
+    });
+  }
+
+  if (!PROJECT_ID) {
     throw new Error(
-      "Missing Google AI API key. Set GOOGLE_API_KEY, GEMINI_API_KEY, or GOOGLE_AI_API_KEY.",
+      "Missing Google Cloud project. Set GOOGLE_CLOUD_PROJECT before using Vertex AI.",
     );
   }
 
-  const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": API_KEY,
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [{ text: buildInstruction(prompt) }],
-        },
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseJsonSchema: PLAN_SCHEMA,
-      },
-    }),
+  return new GoogleGenAI({
+    vertexai: true,
+    project: PROJECT_ID,
+    location: LOCATION,
   });
+}
 
-  const rawText = await response.text();
-  let data = {};
-
-  try {
-    data = rawText ? JSON.parse(rawText) : {};
-  } catch {
-    throw new Error("Google AI returned invalid JSON.");
-  }
-
-  if (!response.ok) {
-    const apiMessage =
-      data?.error?.message ||
-      data?.error?.status ||
-      `Google AI request failed with status ${response.status}.`;
-    throw new Error(apiMessage);
-  }
-
-  const planText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+async function runGooglePlan(prompt) {
+  const ai = getGenAIClient();
+  const result = await ai.models.generateContent({
+    model: MODEL,
+    contents: buildInstruction(prompt),
+    config: {
+      responseMimeType: "application/json",
+      responseJsonSchema: PLAN_SCHEMA,
+    },
+  });
+  const planText = result.text?.trim();
 
   if (!planText) {
-    const blockReason = data?.promptFeedback?.blockReason;
-    if (blockReason) {
-      throw new Error(`Google AI blocked the request: ${blockReason}.`);
-    }
-
-    throw new Error("Google AI did not return plan content.");
+    throw new Error("Vertex AI did not return plan content.");
   }
 
   try {
     return { plan: JSON.parse(planText) };
   } catch {
-    throw new Error("Google AI returned a plan in an unexpected format.");
+    throw new Error("Vertex AI returned a plan in an unexpected format.");
   }
 }
 
@@ -163,18 +153,28 @@ const server = createServer(async (request, response) => {
       }
 
       const { plan } = await runGooglePlan(prompt);
-      sendJson(response, 200, { plan, provider: "google-ai", model: MODEL });
+      sendJson(response, 200, { plan, provider: "vertex-ai", model: MODEL });
       return;
     } catch (error) {
       sendJson(response, 500, {
-        error: error instanceof Error ? error.message : "Failed to generate a Google AI plan.",
+        error: error instanceof Error ? error.message : "Failed to generate a Vertex AI plan.",
       });
       return;
     }
   }
 
   if (request.method === "GET" && request.url === "/api/health") {
-    sendJson(response, 200, { ok: true, provider: "google-ai", model: MODEL });
+    const configured = Boolean(API_KEY || PROJECT_ID);
+
+    sendJson(response, 200, {
+      ok: configured,
+      configured,
+      provider: "vertex-ai",
+      model: MODEL,
+      project: API_KEY ? null : PROJECT_ID ?? null,
+      location: API_KEY ? null : LOCATION,
+      authMode: API_KEY ? "api-key" : "application-default-credentials",
+    });
     return;
   }
 
@@ -182,5 +182,5 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`Google AI API listening on http://127.0.0.1:${PORT}`);
+  console.log(`Vertex AI API listening on http://127.0.0.1:${PORT}`);
 });
