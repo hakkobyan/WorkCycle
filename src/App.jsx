@@ -40,6 +40,7 @@ const STORAGE_KEYS = {
   tasks: "pomodoro.tasks",
   cardTransparency: "pomodoro.cardTransparency",
   cardOrder: "pomodoro.cardOrder",
+  overallInsightCycle: "pomodoro.overallInsightCycle",
 };
 
 const DEFAULT_FOCUS_MINUTES = 25;
@@ -117,6 +118,21 @@ function readStoredItems(key) {
     return storedItems ? JSON.parse(storedItems) : [];
   } catch {
     return [];
+  }
+}
+
+function getNextOverallInsightCycle() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  try {
+    const currentValue = Number(window.localStorage.getItem(STORAGE_KEYS.overallInsightCycle) ?? "0");
+    const nextValue = Number.isFinite(currentValue) ? currentValue + 1 : 1;
+    window.localStorage.setItem(STORAGE_KEYS.overallInsightCycle, String(nextValue));
+    return nextValue;
+  } catch {
+    return 0;
   }
 }
 
@@ -414,6 +430,8 @@ function buildOverallInsights({
   completionRate,
   sessionStreak,
   topTaskAnalytics,
+  averageSessionSeconds,
+  insightCycle,
 }) {
   if (sessions.length === 0 && tasks.length === 0) {
     return [
@@ -455,52 +473,93 @@ function buildOverallInsights({
     )[0] ?? null;
   const openTasks = tasks.filter((task) => !(task.completed ?? false));
   const topTask = topTaskAnalytics[0] ?? null;
-
-  return [
+  const focusedDays = new Set(
+    sessions.map((session) => {
+      const date = new Date(session.startedAt);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    }),
+  ).size;
+  const topTimeBody = bestTimeOfDayEntry
+    ? `Protect your ${bestTimeOfDayEntry[0]} hours. That's where you've already logged ${formatSpentTime(bestTimeOfDayEntry[1])} of focus.`
+    : `Start with one short session today so the app can learn when you focus best.`;
+  const weekdayBody = bestWeekdayEntry
+    ? `${bestWeekdayEntry[0]} is your strongest day so far with ${formatSpentTime(bestWeekdayEntry[1])} tracked. Consider reserving deeper work there.`
+    : "Your strongest workday will appear once you build a little more history.";
+  const topTaskBody = topTask
+    ? `"${topTask.text}" is pulling the most attention at ${formatSpentTime(topTask.focusSeconds ?? 0)}. Break it into a smaller next target if it keeps expanding.`
+    : "No single task dominates yet. That's a good moment to choose one priority and protect it.";
+  const sessionBody = latestSession
+    ? `Your latest session was ${formatSessionDate(latestSession.startedAt)}. Repeating that time slot can help you build a steadier rhythm.`
+    : "Your next session will start shaping a more useful rhythm recommendation.";
+  const streakBody =
+    sessionStreak > 0
+      ? `You're on a ${sessionStreak}-day streak. A short session today is enough to keep the chain alive.`
+      : "You don't have a streak yet. One completed cycle today is enough to start one.";
+  const taskBody =
+    openTasks.length > 0
+      ? `${openTasks.length} open task${openTasks.length === 1 ? "" : "s"} still need attention. Try reducing that list before starting another broad task.`
+      : "Your open list is clear right now. This is a great time to start a single high-value task.";
+  const advicePool = [
     {
       id: "overall-focus",
       tone: "primary",
-      title: "Focus pattern",
-      body: bestTimeOfDayEntry
-        ? `You do your best work in the ${bestTimeOfDayEntry[0]}. That's when you logged ${formatSpentTime(bestTimeOfDayEntry[1])} of focused time.`
-        : `You have logged ${formatSpentTime(totalFocusSeconds)} of focus time so far.`,
+      title: "Protect your best hours",
+      body: topTimeBody,
     },
     {
       id: "overall-weekday",
       tone: "accent",
-      title: "Strongest day",
-      body: bestWeekdayEntry
-        ? `${bestWeekdayEntry[0]} has been your most productive day with ${formatSpentTime(bestWeekdayEntry[1])} tracked across your sessions.`
-        : "Your strongest workday will appear here once more sessions are tracked.",
+      title: "Lean into your strongest day",
+      body: weekdayBody,
     },
     {
       id: "overall-tasks",
       tone: "success",
-      title: "Execution snapshot",
-      body: `You completed ${completedTaskCount} of ${tasks.length} tasks, which puts your completion rate at ${completionRate}%. ${openTasks.length > 0 ? `${openTasks.length} task${openTasks.length === 1 ? "" : "s"} still need attention.` : "Everything is currently wrapped up."}`,
+      title: "Tighten the task list",
+      body: taskBody,
     },
     {
       id: "overall-top-task",
       tone: "secondary",
-      title: "Main time sink",
-      body: topTask
-        ? `"${topTask.text}" received the most attention with ${formatSpentTime(topTask.focusSeconds ?? 0)} of tracked focus.`
-        : "No individual task has enough tracked focus time yet.",
+      title: "Watch the heaviest task",
+      body: topTaskBody,
     },
     {
       id: "overall-session",
       tone: "warning",
-      title: "Session story",
-      body: longestSession
-        ? `Your longest session was ${formatSpentTime(longestSession.durationSeconds ?? 0)} on ${formatSessionDate(longestSession.startedAt)}${longestSession.name ? `, saved as "${longestSession.name}"` : ""}.`
-        : "Your longest session will show up here once you start tracking sessions.",
+      title: "Reuse your latest rhythm",
+      body: sessionBody,
     },
     {
       id: "overall-momentum",
       tone: "neutral",
-      title: "Momentum",
-      body: `${sessionStreak > 0 ? `You're on a ${sessionStreak}-day streak.` : "You don't have a streak yet."} ${latestSession ? `Your latest recorded session was ${formatSessionDate(latestSession.startedAt)}.` : ""}`,
+      title: "Keep momentum alive",
+      body: streakBody,
     },
+    {
+      id: "overall-session-length",
+      tone: "warning",
+      title: "Session length check",
+      body: longestSession
+        ? `Your longest session was ${formatSpentTime(longestSession.durationSeconds ?? 0)} on ${formatSessionDate(longestSession.startedAt)}${longestSession.name ? `, saved as "${longestSession.name}"` : ""}.`
+        : "Your longest session will show up here once you start tracking sessions.",
+    },
+  ];
+  const statsCard = {
+    id: "overall-stats",
+    tone: "primary",
+    title: "Overall stats",
+    body: `Sessions: ${sessions.length}. Focus: ${formatSpentTime(totalFocusSeconds)}. Average session: ${formatSpentTime(averageSessionSeconds)}. Completion: ${completionRate}%. Focused days: ${focusedDays}.`,
+  };
+  const startIndex = advicePool.length > 0 ? insightCycle % advicePool.length : 0;
+  const rotatingAdvice = Array.from({ length: Math.min(2, advicePool.length) }, (_, offset) => {
+    const index = (startIndex + offset) % advicePool.length;
+    return advicePool[index];
+  });
+
+  return [
+    statsCard,
+    ...rotatingAdvice,
   ];
 }
 
@@ -735,6 +794,7 @@ export default function App() {
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [editingSessionId, setEditingSessionId] = useState(null);
+  const [overallInsightCycle] = useState(() => getNextOverallInsightCycle());
   const audioContextRef = useRef(null);
   const taskListRef = useRef(null);
   const taskCountRef = useRef(tasks.length);
@@ -886,6 +946,8 @@ export default function App() {
     completionRate,
     sessionStreak,
     topTaskAnalytics,
+    averageSessionSeconds,
+    insightCycle: overallInsightCycle,
   });
   const nextOpenTask = allTaskClasses[0].items[0] ?? null;
   const overallStory =
