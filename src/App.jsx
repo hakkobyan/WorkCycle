@@ -2,12 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   BarChart3,
   Bot,
+  CalendarDays,
   Check,
   CircleDot,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Info,
   LayoutDashboard,
   ListTodo,
   Menu,
@@ -704,7 +706,7 @@ function GlassButton({ className = "", variant = "primary", type = "button", chi
 }
 
 export default function App() {
-  const [activeView, setActiveView] = useState("Timer");
+  const [activeView, setActiveView] = useState("Introduction");
   const [tasks, setTasks] = useStoredList(STORAGE_KEYS.tasks);
   const [sessions, setSessions] = useStoredList(STORAGE_KEYS.sessions);
   const [taskText, setTaskText] = useState("");
@@ -773,10 +775,34 @@ export default function App() {
   const topTaskAnalytics = [...tasks]
     .sort((firstTask, secondTask) => (secondTask.focusSeconds ?? 0) - (firstTask.focusSeconds ?? 0))
     .slice(0, 5);
+  const todaySessions = sessions.filter((session) => {
+    const date = new Date(session.startedAt);
+    const now = new Date();
+
+    return (
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate()
+    );
+  });
+  const todayFocusSeconds = todaySessions.reduce(
+    (totalSeconds, session) => totalSeconds + (session.durationSeconds ?? 0),
+    0,
+  );
+  const bestTimeOfDayEntry =
+    [...sessions.reduce((timeOfDayTotals, session) => {
+      const date = new Date(session.startedAt);
+      const timeOfDay = getTimeOfDayLabel(date.getHours());
+      const seconds = session.durationSeconds ?? 0;
+
+      timeOfDayTotals.set(timeOfDay, (timeOfDayTotals.get(timeOfDay) ?? 0) + seconds);
+      return timeOfDayTotals;
+    }, new Map()).entries()].sort((firstSlot, secondSlot) => secondSlot[1] - firstSlot[1])[0] ?? null;
   const focusDuration = focusMinutes * 60;
   const breakDuration = breakMinutes * 60;
   const timerDuration = timerMode === "rest" ? breakDuration : focusDuration;
   const timerProgress = timerDuration - timerSeconds;
+  const timerProgressRatio = timerDuration > 0 ? Math.min(Math.max(timerProgress / timerDuration, 0), 1) : 0;
   const canRunTimer =
     timerMode === "rest" ||
     !activeTask ||
@@ -869,6 +895,24 @@ export default function App() {
   const overallNextStep = nextOpenTask
     ? `Best next step: continue "${nextOpenTask.text}".`
     : "Best next step: start a new focused task to build your next insight.";
+
+  function openView(viewName) {
+    setActiveView(viewName);
+    setNavMenuOpen(false);
+  }
+
+  function openTasksAndCreateTask() {
+    addTaskFromTasksView();
+    openView("Tasks");
+  }
+
+  function openTimerAndStart() {
+    openView("Timer");
+
+    if (!timerRunning) {
+      handleTimerButtonClick();
+    }
+  }
 
   function resetDashboardScroll() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -1779,18 +1823,12 @@ export default function App() {
   function renderTimerExperience({ compact = false } = {}) {
     const timerStateLabel = timerMode === "rest" ? "Break" : "Focus";
     const timerTone = timerMode === "rest" ? "#9ee8ff" : "#5A78FF";
-    const timerWindow = formatTimerWindow(timerSeconds);
     const progressRatio = timerDuration > 0 ? Math.min(Math.max(timerProgress / timerDuration, 0), 1) : 0;
-    const progressCircumference = 2 * Math.PI * 51;
-    const progressDash = progressCircumference * progressRatio;
-    const timerDialTicks = Array.from({ length: 60 }, (_, index) => ({
-      index,
-      size: index % 15 === 0 ? "major" : index % 5 === 0 ? "medium" : "minor",
-    }));
 
     return (
       <section
         className={cn("timer-experience", compact && "timer-experience-compact")}
+        aria-label={compact ? undefined : undefined}
         aria-labelledby={compact ? "timer-title" : "timer-page-title"}
       >
         {compact ? (
@@ -1825,93 +1863,77 @@ export default function App() {
           <div className="timer-hero">
             <div className="timer-dial-shell">
               <div className="timer-dial">
-                <div className="timer-dial-ticks" aria-hidden="true">
-                  {timerDialTicks.map((tick) => (
-                    <span
-                      key={tick.index}
-                      className="timer-dial-tick-track"
-                      style={{ transform: `rotate(${tick.index * 6}deg)` }}
-                    >
-                      <span className={cn("timer-dial-tick", `is-${tick.size}`)} />
-                    </span>
-                  ))}
-                </div>
-              <svg
-                className="timer-progress-arc"
-                viewBox="0 0 100 100"
-                aria-hidden="true"
-              >
+                <svg
+                  className="timer-progress-ring"
+                  viewBox="0 0 240 240"
+                  aria-hidden="true"
+                >
+                  <circle className="timer-progress-ring-track" cx="120" cy="120" r="88" />
                   <circle
-                    cx="50"
-                    cy="50"
-                    r="51"
+                    cx="120"
+                    cy="120"
+                    r="88"
                     pathLength="100"
-                    className="timer-progress-arc-line"
+                    className="timer-progress-ring-line"
                     style={{
                       stroke: timerTone,
-                      strokeDasharray: `${progressDash} ${progressCircumference}`,
+                      strokeDasharray: `${progressRatio * 100} 100`,
                     }}
-                />
-              </svg>
-              <span className="timer-dial-center-dot" aria-hidden="true" />
-              <div className="timer-range-pill timer-range-pill-in-dial">
-                <Clock3 aria-hidden="true" size={14} strokeWidth={2.2} />
-                <span>{timerWindow}</span>
-              </div>
-            </div>
-            <div className="timer-hero-readout">
-              <div className="timer-hero-display">{formatTimer(timerSeconds)}</div>
-            </div>
-            <div className="timer-hero-controls">
-              <div className="timer-mode-row">
-                <div className={cn("timer-mode-pill", timerMode === "rest" && "is-rest")}>
-                  <CircleDot aria-hidden="true" size={14} strokeWidth={2.4} />
-                  <span>{timerStateLabel}</span>
+                  />
+                </svg>
+                <div className="timer-dial-readout">
+                  <div className="timer-hero-display">{formatTimer(timerSeconds)}</div>
+                  <div className={cn("timer-mode-pill", timerMode === "rest" && "is-rest")}>
+                    <span>{timerStateLabel}</span>
+                  </div>
                 </div>
               </div>
-
-              <div className="timer-task-picker-block">
-                {timerMode === "rest" ? (
-                  <div className="timer-task-picker timer-task-picker-readonly">
-                    <div className="timer-task-picker-topline">Current mode</div>
-                    <div className="timer-task-picker-body">
-                      <CircleDot aria-hidden="true" size={18} strokeWidth={2.2} />
-                      <span>Break time</span>
-                    </div>
-                  </div>
-                ) : (
-                  <GlassSelect
-                    value={activeTaskId ?? ""}
-                    onValueChange={selectTask}
-                    disabled={focusableTasks.length === 0}
-                  >
-                    <GlassSelectTrigger
-                      id={compact ? "timer-task-compact" : "timer-task-full"}
-                      className={cn(
-                        "timer-task-picker",
-                        compact && "timer-task-picker-compact",
-                      )}
-                      aria-label="Choose task"
-                    >
-                      <div className="timer-task-picker-copy">
-                        <div className="timer-task-picker-topline">Current task</div>
-                        <div className="timer-task-picker-value">
-                          <ListTodo aria-hidden="true" size={18} strokeWidth={2.1} />
-                          <GlassSelectValue placeholder={focusableTasks.length > 0 ? "Choose a task" : "Create a task to begin"} />
+              {!compact ? (
+                <div className="timer-hero-controls">
+                  <div className="timer-task-picker-block">
+                    {timerMode === "rest" ? (
+                      <div className="timer-task-picker timer-task-picker-readonly">
+                        <div className="timer-task-picker-topline">Current mode</div>
+                        <div className="timer-task-picker-body">
+                          <span>Break time</span>
                         </div>
                       </div>
-                    </GlassSelectTrigger>
-                    <GlassSelectContent className="timer-task-picker-menu">
-                      {focusableTasks.map((task) => (
-                        <GlassSelectItem key={task.id} value={task.id} className="timer-task-picker-item">
-                          {task.text}
-                        </GlassSelectItem>
-                      ))}
-                    </GlassSelectContent>
-                  </GlassSelect>
-                )}
-              </div>
-            </div>
+                    ) : (
+                      <GlassSelect
+                        value={activeTaskId ?? ""}
+                        onValueChange={selectTask}
+                        disabled={focusableTasks.length === 0}
+                      >
+                        <GlassSelectTrigger
+                          id={compact ? "timer-task-compact" : "timer-task-full"}
+                          className={cn(
+                            "timer-task-picker",
+                            compact && "timer-task-picker-compact",
+                          )}
+                          aria-label="Choose task"
+                        >
+                          <div className="timer-task-picker-copy">
+                            <div className="timer-task-picker-topline">Current task</div>
+                            <div className="timer-task-picker-value">
+                              <ListTodo aria-hidden="true" size={16} strokeWidth={2.1} />
+                              <GlassSelectValue
+                                placeholder={focusableTasks.length > 0 ? "Choose a task" : "Create a task to begin"}
+                              />
+                            </div>
+                          </div>
+                        </GlassSelectTrigger>
+                        <GlassSelectContent className="timer-task-picker-menu">
+                          {focusableTasks.map((task) => (
+                            <GlassSelectItem key={task.id} value={task.id} className="timer-task-picker-item">
+                              {task.text}
+                            </GlassSelectItem>
+                          ))}
+                        </GlassSelectContent>
+                      </GlassSelect>
+                    )}
+                  </div>
+                </div>
+              ) : null}
               <div className="timer-command-row" aria-label="Timer controls">
                 <button type="button" className="timer-command-button" onClick={resetTimer} aria-label="Reset timer">
                   <RotateCcw aria-hidden="true" size={24} strokeWidth={2.2} />
@@ -2175,6 +2197,7 @@ export default function App() {
     .filter(Boolean);
   const boardRows = chunkItems(orderedCards, 2);
   const sidebarItems = [
+    { label: "Introduction", icon: CircleDot },
     { label: "Timer", icon: Clock3 },
     { label: "Sessions", icon: Clock3 },
     { label: "Tasks", icon: ListTodo },
@@ -2268,7 +2291,10 @@ export default function App() {
           </div>
         </div>
       </aside>
-      <div ref={dashboardMainRef} className="dashboard-main">
+      <div
+        ref={dashboardMainRef}
+        className={cn("dashboard-main", activeView === "Introduction" && "is-introduction-view")}
+      >
         <header className={cn("dashboard-header", activeView === "Timer" && "dashboard-header-timer")}>
           <div className="dashboard-header-copy">
             <h1>{activeView}</h1>
@@ -2406,7 +2432,169 @@ export default function App() {
           </div>
         </div>
       ) : null}
-        {activeView === "Timer" ? (
+        {activeView === "Introduction" ? (
+          <section className="intro-view is-viewport-fit" aria-label="Introduction overview">
+            <div className="intro-shell">
+              <div className="intro-topline">
+                <Info aria-hidden="true" size={16} strokeWidth={2.2} />
+                <span>Focus that remembers your work</span>
+              </div>
+              <div className="intro-grid">
+                <section className="panel intro-hero-panel" aria-labelledby="intro-welcome-title">
+                  <div className="intro-copy">
+                    <h2 id="intro-welcome-title">One cycle. Clear results.</h2>
+                    <p>
+                      You pick a task, set your rhythm,
+                      <br />
+                      work one cycle - and see the result.
+                      <br />
+                      Work stops spilling across the day.
+                    </p>
+                    <div className="intro-action-row">
+                      <button type="button" className="intro-primary-action" onClick={openTimerAndStart}>
+                        <Play aria-hidden="true" size={18} strokeWidth={2.2} fill="currentColor" />
+                        <span>{timerRunning ? "Open running session" : "Start first session"}</span>
+                      </button>
+                      <button type="button" className="intro-secondary-action" onClick={openTasksAndCreateTask}>
+                        <Plus aria-hidden="true" size={18} strokeWidth={2.4} />
+                        <span>Create task</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="intro-focus-area">
+                    <div className="intro-timer-spotlight">
+                      <div className="intro-timer-dial">
+                        <svg className="intro-timer-ring-svg" viewBox="0 0 240 240" aria-hidden="true">
+                          <circle className="intro-timer-ring-track" cx="120" cy="120" r="88" />
+                          <circle
+                            className="intro-timer-ring-progress"
+                            cx="120"
+                            cy="120"
+                            r="88"
+                            pathLength="100"
+                            style={{
+                              strokeDasharray: `${timerProgressRatio * 100} 100`,
+                            }}
+                          />
+                        </svg>
+                        <div className="intro-timer-readout">
+                          <strong>{formatTimer(timerSeconds)}</strong>
+                          <div className={cn("intro-timer-mode", timerMode === "rest" && "is-rest")}>
+                            <span>{timerMode === "rest" ? "Break" : "Focus"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="intro-timer-controls" aria-label="Introduction timer controls">
+                      <button type="button" className="intro-icon-button" onClick={resetTimer} aria-label="Reset timer">
+                        <RotateCcw aria-hidden="true" size={22} strokeWidth={2.2} />
+                      </button>
+                      <button
+                        type="button"
+                        className="intro-icon-button intro-icon-button-primary"
+                        onClick={openTimerAndStart}
+                        aria-label="Start timer"
+                      >
+                        <Play aria-hidden="true" size={24} strokeWidth={2.2} fill="currentColor" />
+                      </button>
+                      <button type="button" className="intro-icon-button" onClick={pauseTimer} aria-label="Pause timer">
+                        <Pause aria-hidden="true" size={22} strokeWidth={2.4} />
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                <aside className="panel intro-steps-panel" aria-labelledby="intro-steps-title">
+                  <div className="intro-steps-header">
+                    <div>
+                      <h2 id="intro-steps-title">Welcome to WorkCycle</h2>
+                      <p>Three steps and you're in flow.</p>
+                    </div>
+                  </div>
+
+                  <div className="intro-step-list">
+                    <article className="intro-step-card">
+                      <div className="intro-step-number">1</div>
+                      <div className="intro-step-copy">
+                        <strong>Choose a task</strong>
+                        <p>{nextOpenTask ? `Next up: ${nextOpenTask.text}` : "Add one clear task to start your first session."}</p>
+                        <button type="button" className="intro-step-action" onClick={openTasksAndCreateTask}>
+                          Create task
+                        </button>
+                      </div>
+                    </article>
+
+                    <article className="intro-step-card">
+                      <div className="intro-step-number">2</div>
+                      <div className="intro-step-copy">
+                        <strong>Start the cycle</strong>
+                        <p>Start a {focusMinutes}-minute focus cycle with an automatic {breakMinutes}-minute break after it.</p>
+                        <button type="button" className="intro-step-action is-primary" onClick={openTimerAndStart}>
+                          Start timer
+                        </button>
+                      </div>
+                    </article>
+
+                    <article className="intro-step-card">
+                      <div className="intro-step-number">3</div>
+                      <div className="intro-step-copy">
+                        <strong>See patterns</strong>
+                        <p>After a few sessions, analytics reveal your timing, rhythm, and best hours for deep focus.</p>
+                        <button type="button" className="intro-step-action" onClick={() => openView("Dashboard")}>
+                          Open Dashboard
+                        </button>
+                      </div>
+                    </article>
+                  </div>
+
+                  <div className="intro-steps-footer">You can always open Dashboard from the menu.</div>
+                </aside>
+              </div>
+
+              <section className="panel intro-stats-panel" aria-labelledby="intro-stats-title">
+                <div className="intro-stats-grid">
+                  <article className="intro-stat-card">
+                    <div className="intro-stat-label">
+                      <Clock3 aria-hidden="true" size={18} strokeWidth={2.1} />
+                      <span id="intro-stats-title">Today</span>
+                    </div>
+                    <strong>{todaySessions.length}<span>{todaySessions.length === 1 ? " session" : " sessions"}</span></strong>
+                    <p>{formatSpentTime(todayFocusSeconds)}</p>
+                  </article>
+
+                  <article className="intro-stat-card">
+                    <div className="intro-stat-label">
+                      <CircleDot aria-hidden="true" size={18} strokeWidth={2.1} />
+                      <span>Total focus</span>
+                    </div>
+                    <strong>{formatSpentTime(totalFocusSeconds)}</strong>
+                    <p>all time</p>
+                  </article>
+
+                  <article className="intro-stat-card">
+                    <div className="intro-stat-label">
+                      <BarChart3 aria-hidden="true" size={18} strokeWidth={2.1} />
+                      <span>Current streak</span>
+                    </div>
+                    <strong>{sessionStreak}<span>{sessionStreak === 1 ? " day" : " days"}</span></strong>
+                    <p>{sessionStreak > 0 ? "keep it going" : "start today"}</p>
+                  </article>
+
+                  <article className="intro-stat-card">
+                    <div className="intro-stat-label">
+                      <CalendarDays aria-hidden="true" size={18} strokeWidth={2.1} />
+                      <span>Best time</span>
+                    </div>
+                    <strong>{bestTimeOfDayEntry ? bestTimeOfDayEntry[0] : "—"}</strong>
+                    <p>{bestTimeOfDayEntry ? "based on tracked focus" : "not enough data"}</p>
+                  </article>
+                </div>
+              </section>
+            </div>
+          </section>
+        ) : activeView === "Timer" ? (
           <section className="timer-view" aria-label="Timer workspace">
             {renderTimerExperience()}
           </section>

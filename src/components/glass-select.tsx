@@ -16,7 +16,7 @@ const GlassSelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between gap-2 rounded-xl px-4 py-2 text-sm",
+      "flex h-9 w-full items-center justify-between gap-1.5 rounded-lg px-3 py-1.5 text-xs",
       "border border-white/10 bg-white/[0.02]",
       "text-white placeholder:text-white/40",
       "shadow-none",

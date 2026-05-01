@@ -4686,6 +4686,10 @@ label,
   scrollbar-gutter: stable;
 }
 
+.dashboard-main.is-introduction-view {
+  overflow-y: hidden;
+}
+
 .dashboard-main > section {
   min-height: 0;
 }
@@ -4756,8 +4760,8 @@ label,
 
 .timer-task-picker-block {
   display: grid;
-  gap: 0.55rem;
-  width: min(100%, 10.5rem);
+  gap: 0.3rem;
+  width: min(100%, 12.5rem);
 }
 
 .timer-task-picker-label {
@@ -4771,16 +4775,14 @@ label,
 .timer-task-picker-readonly {
   display: grid;
   align-items: center;
-  gap: 0.35rem;
-  min-height: 3.35rem !important;
+  gap: 0.18rem;
+  min-height: 2.35rem !important;
   width: 100%;
-  padding: 0.45rem 0.62rem !important;
+  padding: 0.3rem 0.5rem !important;
   border: 1px solid rgb(255 255 255 / 0.12) !important;
-  border-radius: 0.8rem !important;
-  background: linear-gradient(180deg, rgb(18 19 27 / 0.98), rgb(11 12 18 / 0.98)) !important;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.04),
-    0 12px 24px rgb(0 0 0 / 0.14);
+  border-radius: 0.7rem !important;
+  background: rgb(24 25 31 / 0.98) !important;
+  box-shadow: none;
   color: #ffffff !important;
 }
 
@@ -4790,13 +4792,13 @@ label,
 
 .timer-task-picker-copy {
   display: grid;
-  gap: 0.38rem;
+  gap: 0.12rem;
   width: 100%;
 }
 
 .timer-task-picker-topline {
   color: rgb(255 255 255 / 0.36);
-  font-size: 0.44rem;
+  font-size: 0.42rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -4807,7 +4809,7 @@ label,
 .timer-task-picker-readonly {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.42rem;
   width: 100%;
 }
 
@@ -4817,13 +4819,18 @@ label,
 }
 
 .timer-task-picker-value {
-  font-size: 0.74rem;
+  font-size: 0.66rem;
 }
 
 .timer-task-picker-value svg,
 .timer-task-picker-readonly svg,
 .timer-task-picker-body svg {
   color: #7f88ff;
+}
+
+.timer-task-picker-value svg {
+  width: 0.78rem;
+  height: 0.78rem;
 }
 
 .timer-task-picker-menu {
@@ -4855,7 +4862,7 @@ label,
 .timer-dial-shell {
   display: grid;
   justify-items: center;
-  gap: 1.35rem;
+  gap: 1.15rem;
   width: 100%;
 }
 
@@ -4863,142 +4870,70 @@ label,
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 19rem);
+  width: min(100%, 25.5rem);
   aspect-ratio: 1;
 }
 
-.timer-dial-ticks,
-.timer-progress-arc {
+.timer-progress-ring {
   position: absolute;
   inset: 0;
-}
-
-.timer-dial-tick-track {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 0.35rem;
-}
-
-.timer-dial-tick {
-  width: 1.7px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.34);
-}
-
-.timer-dial-tick.is-major {
-  width: 2.2px;
-  height: 19px;
-  background: rgb(255 255 255 / 0.7);
-}
-
-.timer-dial-tick.is-medium {
-  width: 1.9px;
-  height: 12px;
-  background: rgb(255 255 255 / 0.52);
-}
-
-.timer-dial-tick.is-minor {
-  height: 7px;
-}
-
-.timer-dial-center-dot {
-  position: absolute;
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.92);
-  box-shadow: 0 0 16px rgb(255 255 255 / 0.14);
-}
-
-.timer-progress-arc {
   overflow: visible;
   transform: rotate(-90deg);
 }
 
-.timer-progress-arc-line {
+.timer-progress-ring-track,
+.timer-progress-ring-line {
   fill: none;
-  stroke-width: 1.9;
+  stroke-width: 18;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 5px rgb(90 120 255 / 0.24));
 }
 
-.timer-hero-readout {
+.timer-progress-ring-track {
+  stroke: rgb(255 255 255 / 0.08);
+}
+
+.timer-progress-ring-line {
+  filter: none;
+}
+
+.timer-dial-readout {
+  position: absolute;
   display: grid;
   justify-items: center;
-  gap: 0.35rem;
+  gap: 0.85rem;
   text-align: center;
 }
 
 .timer-hero-controls {
   display: grid;
   justify-items: center;
-  gap: 0.7rem;
+  gap: 0.95rem;
   width: 100%;
 }
 
 .timer-hero-display {
   color: #ffffff;
-  font-size: clamp(3.35rem, 8vw, 5rem);
+  font-size: clamp(4.9rem, 9vw, 6.8rem);
   font-weight: 500;
-  letter-spacing: 0.04em;
-  line-height: 0.9;
+  letter-spacing: -0.06em;
+  line-height: 0.88;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 14px 40px rgb(0 0 0 / 0.32);
-}
-
-.timer-range-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 2rem;
-  padding: 0 0.8rem;
-  border: 1px solid rgb(255 255 255 / 0.08);
-  border-radius: 999px;
-  background: rgb(14 16 23 / 0.9);
-  color: rgb(255 255 255 / 0.48);
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.03),
-    0 10px 28px rgb(0 0 0 / 0.18);
-}
-
-.timer-range-pill svg {
-  color: rgb(255 255 255 / 0.32);
-}
-
-.timer-range-pill-in-dial {
-  position: absolute;
-  left: 50%;
-  top: 64%;
-  transform: translateX(-50%);
-  z-index: 2;
-}
-
-.timer-mode-row {
-  display: flex;
-  justify-content: center;
-  width: 100%;
+  text-shadow: none;
 }
 
 .timer-mode-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  min-height: 2.35rem;
-  padding: 0 0.8rem;
-  border: 1px solid rgb(133 141 255 / 0.16);
+  gap: 0.35rem;
+  min-height: 2.7rem;
+  padding: 0 1rem;
+  border: 1px solid rgb(133 141 255 / 0.14);
   border-radius: 999px;
-  background: rgb(13 16 24 / 0.78);
+  background: #11141a;
   color: #8e92ff;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   font-weight: 600;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.03),
-    0 10px 28px rgb(0 0 0 / 0.12);
+  box-shadow: none;
 }
 
 .timer-mode-pill.is-rest {
@@ -5091,108 +5026,64 @@ label,
 }
 
 .timer-experience-compact {
-  gap: 1rem;
+  gap: 0.7rem;
   width: 100%;
 }
 
 .timer-experience-compact .timer-layout {
   grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-.timer-experience-compact .timer-info-pane {
-  order: 2;
-}
-
-.timer-experience-compact .timer-page-top {
-  display: none;
-}
-
-.timer-experience-compact .timer-task-picker-block {
-  width: min(100%, 14rem);
-  gap: 0.45rem;
-}
-
-.timer-experience-compact .timer-task-picker-label {
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.timer-experience-compact .timer-dial-shell {
-  gap: 0.95rem;
-}
-
-.timer-experience-compact .timer-hero {
   gap: 0.65rem;
 }
 
-.timer-experience-compact .timer-hero-controls {
-  gap: 0.55rem;
+.timer-experience-compact .timer-info-pane {
+  display: none;
+}
+
+.timer-experience-compact .timer-dial-shell {
+  gap: 1rem;
+}
+
+.timer-experience-compact .timer-hero {
+  gap: 0.75rem;
+  transform: translateY(-2.2rem);
 }
 
 .timer-experience-compact .timer-dial {
-  width: min(100%, 11.5rem);
-}
-
-.timer-experience-compact .timer-dial-tick-track {
-  padding-top: 0.2rem;
-}
-
-.timer-experience-compact .timer-dial-tick.is-major {
-  height: 12px;
-}
-
-.timer-experience-compact .timer-dial-tick.is-medium {
-  height: 8px;
-}
-
-.timer-experience-compact .timer-dial-tick.is-minor {
-  height: 5px;
+  width: min(100%, 16.5rem);
 }
 
 .timer-experience-compact .timer-hero-display {
-  font-size: clamp(2.15rem, 5vw, 3rem);
-}
-
-.timer-experience-compact .timer-range-pill {
-  min-height: 1.8rem;
-  padding: 0 0.65rem;
-  font-size: 0.72rem;
-}
-
-.timer-experience-compact .timer-range-pill-in-dial {
-  top: 66%;
+  font-size: clamp(3.1rem, 5.9vw, 4.2rem);
 }
 
 .timer-experience-compact .timer-mode-pill {
-  min-height: 1.95rem;
-  padding: 0 0.65rem;
-  font-size: 0.78rem;
+  min-height: 2.2rem;
+  padding: 0 0.9rem;
+  font-size: 0.84rem;
 }
 
 .timer-experience-compact .timer-command-row {
-  width: min(100%, 15rem);
-  gap: 0.6rem;
+  width: min(100%, 11.75rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  transform: translateY(-1rem);
 }
 
 .timer-experience-compact .timer-command-button {
-  min-height: 5.2rem;
-  gap: 0.45rem;
-  padding: 0.7rem 0.45rem;
+  min-height: 3.6rem;
+  width: 3.6rem;
+  border-radius: 999px;
+  gap: 0;
+  padding: 0;
 }
 
-.timer-experience-compact .timer-command-icon {
-  width: 2.7rem;
-  height: 2.7rem;
-}
-
-.timer-experience-compact .timer-command-copy strong {
-  font-size: 0.82rem;
-}
-
-.timer-experience-compact .timer-command-copy small {
+.timer-experience-compact .timer-command-copy {
   display: none;
+}
+
+.timer-experience-compact .timer-command-button-primary {
+  width: 4.1rem;
+  min-height: 4.1rem;
 }
 
 .dashboard-header {
@@ -6277,6 +6168,411 @@ label,
   gap: 1rem;
 }
 
+.intro-view {
+  display: grid;
+  gap: 1rem;
+}
+
+.intro-view.is-viewport-fit {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+}
+
+.intro-shell {
+  display: grid;
+  min-height: 0;
+  height: 100%;
+  gap: 0.8rem;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.intro-topline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: rgb(255 255 255 / 0.66);
+  font-size: 0.85rem;
+}
+
+.intro-topline svg {
+  color: #4f77ff;
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.82fr);
+  gap: 0.8rem;
+  min-height: 0;
+}
+
+.intro-hero-panel {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(300px, 1.05fr);
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 0;
+  height: 100%;
+  padding: 1.25rem;
+  border: 1px solid rgb(255 255 255 / 0.07) !important;
+  border-radius: 1rem !important;
+  background: rgb(19 19 23 / 0.94) !important;
+  box-shadow: none !important;
+}
+
+.intro-copy {
+  display: grid;
+  gap: 1rem;
+  max-width: 26rem;
+  padding-left: 1.25rem;
+  transform: translateY(-0.75rem);
+}
+
+.intro-copy h2 {
+  margin: 0;
+  color: #f5f7ff;
+  font-size: clamp(2.9rem, 4.6vw, 4.45rem);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.06em;
+}
+
+.intro-copy p {
+  margin: 0;
+  color: rgb(255 255 255 / 0.68);
+  font-size: 1.22rem;
+  line-height: 1.6;
+}
+
+.intro-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+.intro-primary-action,
+.intro-secondary-action,
+.intro-step-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 2.95rem;
+  padding: 0.78rem 1.15rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 0.9rem;
+  color: #f3f6ff;
+  font-size: 0.96rem;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.intro-primary-action,
+.intro-step-action.is-primary {
+  background: linear-gradient(180deg, #3f7cff, #2d66ff);
+  border-color: #3f7cff;
+  color: #ffffff;
+}
+
+.intro-secondary-action,
+.intro-step-action {
+  background: #11141a;
+  color: rgb(255 255 255 / 0.76);
+}
+
+.intro-primary-action:hover,
+.intro-secondary-action:hover,
+.intro-step-action:hover {
+  transform: translateY(-1px);
+  border-color: rgb(255 255 255 / 0.18);
+}
+
+.intro-primary-action:hover,
+.intro-step-action.is-primary:hover {
+  background: linear-gradient(180deg, #4b86ff, #356dff);
+  border-color: #4b86ff;
+}
+
+.intro-secondary-action:hover,
+.intro-step-action:hover {
+  background: #151922;
+}
+
+.intro-focus-area {
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+}
+
+.intro-timer-spotlight {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.intro-timer-dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 25rem);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.intro-timer-ring-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+
+.intro-timer-ring-track,
+.intro-timer-ring-progress {
+  fill: none;
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+
+.intro-timer-ring-track {
+  stroke: rgb(255 255 255 / 0.08);
+}
+
+.intro-timer-ring-progress {
+  stroke: #3a6fff;
+  filter: drop-shadow(0 0 10px rgb(58 111 255 / 0.3));
+}
+
+.intro-timer-progress-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: #3a6fff;
+  box-shadow: none;
+  transform-origin: center center;
+  z-index: 2;
+}
+
+.intro-timer-readout {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+}
+
+.intro-timer-readout strong {
+  color: #ffffff;
+  font-size: clamp(3.4rem, 5vw, 4.8rem);
+  line-height: 1;
+  letter-spacing: -0.065em;
+}
+
+.intro-timer-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.52rem 0.9rem;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 1rem;
+  background: #171922;
+  color: #4f77ff;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+
+.intro-timer-mode.is-rest {
+  color: #8fdfff;
+}
+
+.intro-timer-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.intro-icon-button {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 999px;
+  background: #171922;
+  color: #e7ecff;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  box-shadow: none;
+}
+
+.intro-icon-button:hover {
+  transform: translateY(-1px);
+  border-color: rgb(255 255 255 / 0.16);
+}
+
+.intro-icon-button-primary {
+  background: #2d66ff;
+}
+
+.intro-steps-panel {
+  display: grid;
+  align-content: start;
+  min-height: 0;
+  height: 100%;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 1.3rem;
+  background: linear-gradient(180deg, rgb(12 15 23 / 0.96), rgb(9 12 19 / 0.98));
+}
+
+.intro-steps-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.intro-steps-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.intro-steps-header p {
+  margin: 0.55rem 0 0;
+  color: rgb(255 255 255 / 0.6);
+  line-height: 1.4;
+  font-size: 0.92rem;
+}
+
+.intro-steps-close {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(255 255 255 / 0.62);
+  cursor: default;
+}
+
+.intro-step-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.intro-step-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem;
+  padding: 0.85rem;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 0.02);
+}
+
+.intro-step-number {
+  display: grid;
+  place-items: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  border: 1px solid rgb(79 119 255 / 0.5);
+  border-radius: 999px;
+  color: #4f77ff;
+  font-size: 0.9rem;
+}
+
+.intro-step-copy {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.intro-step-copy strong {
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.intro-step-copy p {
+  margin: 0;
+  color: rgb(255 255 255 / 0.62);
+  line-height: 1.45;
+  font-size: 0.88rem;
+}
+
+.intro-steps-footer {
+  color: rgb(255 255 255 / 0.54);
+  line-height: 1.45;
+  font-size: 0.88rem;
+  padding: 0.15rem 0.15rem 0;
+}
+
+.intro-stats-panel {
+  padding: 0.25rem;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 1.3rem;
+  background: linear-gradient(180deg, rgb(10 13 21 / 0.95), rgb(7 10 17 / 0.98));
+}
+
+.intro-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.intro-stat-card {
+  display: grid;
+  gap: 0.7rem;
+  min-height: 0;
+  padding: 0.9rem;
+}
+
+.intro-stat-card + .intro-stat-card {
+  border-left: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.intro-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+  color: rgb(255 255 255 / 0.72);
+  font-size: 0.88rem;
+}
+
+.intro-stat-label svg {
+  color: #4f77ff;
+}
+
+.intro-stat-card strong {
+  display: flex;
+  align-items: end;
+  gap: 0.35rem;
+  color: #ffffff;
+  font-size: clamp(1.85rem, 3.2vw, 2.75rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.intro-stat-card strong span {
+  color: rgb(255 255 255 / 0.88);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.intro-stat-card p {
+  margin: 0;
+  color: rgb(255 255 255 / 0.56);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
 .tasks-view-stat {
   display: grid;
   gap: 0.45rem;
@@ -6562,6 +6858,36 @@ label,
     grid-template-columns: none;
   }
 
+  .intro-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .intro-hero-panel {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+  }
+
+  .intro-copy {
+    max-width: none;
+  }
+
+  .intro-focus-area {
+    padding-top: 0.5rem;
+  }
+
+  .intro-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .intro-stat-card:nth-child(3),
+  .intro-stat-card:nth-child(4) {
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+  }
+
+  .intro-stat-card:nth-child(3) {
+    border-left: 0;
+  }
+
   .dashboard-sidebar {
     position: relative !important;
     inset: auto !important;
@@ -6749,6 +7075,74 @@ label,
 }
 
 @media (max-width: 640px) {
+  .intro-copy h2 {
+    font-size: 2.5rem;
+  }
+
+  .intro-action-row,
+  .intro-timer-controls,
+  .intro-stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .intro-action-row {
+    display: grid;
+  }
+
+  .intro-primary-action,
+  .intro-secondary-action,
+  .intro-step-action {
+    width: 100%;
+  }
+
+  .intro-icon-button {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .intro-timer-dial {
+    width: min(100%, 18.5rem);
+  }
+
+  .intro-timer-readout strong {
+    font-size: 3.3rem;
+  }
+
+  .intro-timer-mode {
+    padding: 0.48rem 0.8rem;
+    font-size: 0.84rem;
+  }
+
+  .intro-steps-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .intro-step-card {
+    grid-template-columns: 1fr;
+  }
+
+  .intro-step-number {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .intro-stats-grid {
+    display: grid;
+  }
+
+  .intro-stat-card,
+  .intro-stat-card + .intro-stat-card,
+  .intro-stat-card:nth-child(3),
+  .intro-stat-card:nth-child(4) {
+    min-height: auto;
+    border-left: 0;
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+  }
+
+  .intro-stat-card:first-child {
+    border-top: 0;
+  }
+
   .dashboard-sidebar {
     padding: 0.85rem 0.85rem 1rem;
   }
@@ -6982,6 +7376,156 @@ label,
 }
 
 @media (max-height: 800px) and (min-width: 1081px) {
+  .dashboard-main.is-introduction-view {
+    gap: 0.75rem;
+    padding-top: 0.9rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .intro-view {
+    gap: 0.75rem;
+  }
+
+  .intro-shell {
+    gap: 0.65rem;
+  }
+
+  .intro-topline {
+    font-size: 0.78rem;
+  }
+
+  .intro-grid {
+    gap: 0.65rem;
+  }
+
+  .intro-hero-panel {
+    gap: 1rem;
+    padding: 0.95rem 1rem;
+  }
+
+  .intro-copy {
+    gap: 0.75rem;
+    max-width: 22rem;
+  }
+
+  .intro-copy h2 {
+    font-size: clamp(2.15rem, 3.2vw, 3.2rem);
+  }
+
+  .intro-copy p {
+    font-size: 0.98rem;
+    line-height: 1.48;
+  }
+
+  .intro-action-row {
+    gap: 0.6rem;
+    margin-top: 0.45rem;
+  }
+
+  .intro-primary-action,
+  .intro-secondary-action,
+  .intro-step-action {
+    min-height: 2.65rem;
+    padding: 0.68rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .intro-focus-area {
+    gap: 0.85rem;
+  }
+
+  .intro-timer-dial {
+    width: min(100%, 20rem);
+  }
+
+  .intro-timer-readout strong {
+    font-size: clamp(2.55rem, 4vw, 3.45rem);
+  }
+
+  .intro-timer-mode {
+    padding: 0.45rem 0.78rem;
+    font-size: 0.82rem;
+  }
+
+  .intro-timer-controls {
+    gap: 0.8rem;
+  }
+
+  .intro-icon-button {
+    width: 3.8rem;
+    height: 3.8rem;
+  }
+
+  .intro-steps-panel {
+    gap: 0.75rem;
+    padding: 0.85rem;
+  }
+
+  .intro-steps-header h2 {
+    font-size: 1.28rem;
+  }
+
+  .intro-steps-header p {
+    margin-top: 0.45rem;
+    font-size: 0.84rem;
+  }
+
+  .intro-step-list {
+    gap: 0.6rem;
+  }
+
+  .intro-step-card {
+    gap: 0.65rem;
+    padding: 0.72rem;
+  }
+
+  .intro-step-number {
+    width: 1.7rem;
+    height: 1.7rem;
+    font-size: 0.82rem;
+  }
+
+  .intro-step-copy {
+    gap: 0.38rem;
+  }
+
+  .intro-step-copy strong {
+    font-size: 0.88rem;
+  }
+
+  .intro-step-copy p,
+  .intro-steps-footer {
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+
+  .intro-stats-panel {
+    padding: 0.18rem;
+  }
+
+  .intro-stat-card {
+    gap: 0.55rem;
+    padding: 0.72rem;
+  }
+
+  .intro-stat-label {
+    gap: 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  .intro-stat-card strong {
+    font-size: clamp(1.55rem, 2.4vw, 2.25rem);
+  }
+
+  .intro-stat-card strong span {
+    font-size: 0.72rem;
+  }
+
+  .intro-stat-card p {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
   .timer-layout {
     gap: 2.4rem;
   }
@@ -7076,6 +7620,6 @@ label,
 
 @media (min-height: 801px) and (min-width: 1081px) {
   .timer-info-pane {
-    transform: translateX(-5rem);
+    transform: translate(-5rem, 6.5rem);
   }
 }
