@@ -20,7 +20,6 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { AnimatedCircularProgressBar } from "./components/ui/animated-circular-progress-bar";
 import {
   GlassSelect,
   GlassSelectContent,
@@ -292,6 +291,17 @@ function formatTimer(totalSeconds) {
   const seconds = totalSeconds % 60;
 
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatTimerWindow(totalSeconds, baseDate = new Date()) {
+  const endDate = new Date(baseDate.getTime() + Math.max(totalSeconds, 0) * 1000);
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  return `${formatter.format(baseDate)} - ${formatter.format(endDate)}`;
 }
 
 function formatSpentTime(totalSeconds = 0) {
@@ -1243,7 +1253,7 @@ export default function App() {
 
     setAiLoading(true);
     setAiError("");
-    setAiResult("Generating session and tasks with Codex...");
+    setAiResult("Generating session and tasks with Google AI...");
 
     try {
       let responseData = null;
@@ -1264,7 +1274,7 @@ export default function App() {
             const apiError =
               responseData?.error ||
               responseData?.rawText ||
-              "Codex request failed.";
+              "Google AI request failed.";
             throw new Error(apiError);
           }
 
@@ -1764,6 +1774,14 @@ export default function App() {
   function renderTimerExperience({ compact = false } = {}) {
     const timerStateLabel = timerMode === "rest" ? "Break" : "Focus";
     const timerTone = timerMode === "rest" ? "#9ee8ff" : "#5A78FF";
+    const timerWindow = formatTimerWindow(timerSeconds);
+    const progressRatio = timerDuration > 0 ? Math.min(Math.max(timerProgress / timerDuration, 0), 1) : 0;
+    const progressCircumference = 2 * Math.PI * 51;
+    const progressDash = progressCircumference * progressRatio;
+    const timerDialTicks = Array.from({ length: 60 }, (_, index) => ({
+      index,
+      size: index % 15 === 0 ? "major" : index % 5 === 0 ? "medium" : "minor",
+    }));
 
     return (
       <section
@@ -1776,104 +1794,148 @@ export default function App() {
           </div>
         ) : null}
 
-        <div className="timer-hero">
-          <div className="timer-hero-ring">
-            <AnimatedCircularProgressBar
-              max={timerDuration}
-              min={0}
-              value={timerProgress}
-              gaugePrimaryColor={timerTone}
-              gaugeSecondaryColor="rgba(255,255,255,0.08)"
-              className="timer-hero-progress"
-            />
-            <div className="timer-hero-inner">
+        <div className="timer-layout">
+          <div className="timer-info-pane">
+            {!compact ? (
+              <div className="timer-overall-block" aria-label="AI summary">
+                <div className="timer-overall-story">
+                  <strong>{overallNextStep}</strong>
+                  <span>{overallStory}</span>
+                </div>
+                <div className="timer-overall-bubbles">
+                  {overallInsights.slice(0, 3).map((insight) => (
+                    <article
+                      key={insight.id}
+                      className={cn("timer-overall-bubble", `timer-overall-bubble-${insight.tone}`)}
+                    >
+                      <span>{insight.title}</span>
+                      <p>{insight.body}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="timer-hero">
+            <div className="timer-dial-shell">
+              <div className="timer-dial">
+                <div className="timer-dial-ticks" aria-hidden="true">
+                  {timerDialTicks.map((tick) => (
+                    <span
+                      key={tick.index}
+                      className="timer-dial-tick-track"
+                      style={{ transform: `rotate(${tick.index * 6}deg)` }}
+                    >
+                      <span className={cn("timer-dial-tick", `is-${tick.size}`)} />
+                    </span>
+                  ))}
+                </div>
+              <svg
+                className="timer-progress-arc"
+                viewBox="0 0 100 100"
+                aria-hidden="true"
+              >
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="51"
+                    pathLength="100"
+                    className="timer-progress-arc-line"
+                    style={{
+                      stroke: timerTone,
+                      strokeDasharray: `${progressDash} ${progressCircumference}`,
+                    }}
+                />
+              </svg>
+              <span className="timer-dial-center-dot" aria-hidden="true" />
+              <div className="timer-range-pill timer-range-pill-in-dial">
+                <Clock3 aria-hidden="true" size={14} strokeWidth={2.2} />
+                <span>{timerWindow}</span>
+              </div>
+            </div>
+            <div className="timer-hero-readout">
               <div className="timer-hero-display">{formatTimer(timerSeconds)}</div>
-              <div className={cn("timer-mode-pill", timerMode === "rest" && "is-rest")}>
-                <CircleDot aria-hidden="true" size={14} strokeWidth={2.4} />
-                <span>{timerStateLabel}</span>
+            </div>
+            <div className="timer-hero-controls">
+              <div className="timer-mode-row">
+                <div className={cn("timer-mode-pill", timerMode === "rest" && "is-rest")}>
+                  <CircleDot aria-hidden="true" size={14} strokeWidth={2.4} />
+                  <span>{timerStateLabel}</span>
+                </div>
+              </div>
+
+              <div className="timer-task-picker-block">
+                {timerMode === "rest" ? (
+                  <div className="timer-task-picker timer-task-picker-readonly">
+                    <div className="timer-task-picker-topline">Current mode</div>
+                    <div className="timer-task-picker-body">
+                      <CircleDot aria-hidden="true" size={18} strokeWidth={2.2} />
+                      <span>Break time</span>
+                    </div>
+                  </div>
+                ) : (
+                  <GlassSelect
+                    value={activeTaskId ?? ""}
+                    onValueChange={selectTask}
+                    disabled={focusableTasks.length === 0}
+                  >
+                    <GlassSelectTrigger
+                      id={compact ? "timer-task-compact" : "timer-task-full"}
+                      className={cn(
+                        "timer-task-picker",
+                        compact && "timer-task-picker-compact",
+                      )}
+                      aria-label="Choose task"
+                    >
+                      <div className="timer-task-picker-copy">
+                        <div className="timer-task-picker-topline">Current task</div>
+                        <div className="timer-task-picker-value">
+                          <ListTodo aria-hidden="true" size={18} strokeWidth={2.1} />
+                          <GlassSelectValue placeholder={focusableTasks.length > 0 ? "Choose a task" : "Create a task to begin"} />
+                        </div>
+                      </div>
+                    </GlassSelectTrigger>
+                    <GlassSelectContent className="timer-task-picker-menu">
+                      {focusableTasks.map((task) => (
+                        <GlassSelectItem key={task.id} value={task.id} className="timer-task-picker-item">
+                          {task.text}
+                        </GlassSelectItem>
+                      ))}
+                    </GlassSelectContent>
+                  </GlassSelect>
+                )}
+              </div>
+            </div>
+              <div className="timer-command-row" aria-label="Timer controls">
+                <button type="button" className="timer-command-button" onClick={resetTimer} aria-label="Reset timer">
+                  <RotateCcw aria-hidden="true" size={24} strokeWidth={2.2} />
+                  <span className="timer-command-copy">Reset</span>
+                </button>
+                <button
+                  type="button"
+                  className="timer-command-button timer-command-button-primary"
+                  onClick={handleTimerButtonClick}
+                  disabled={!timerRunning && (!canRunTimer || timerSeconds === 0)}
+                  aria-label="Start timer"
+                >
+                  <Play aria-hidden="true" size={28} strokeWidth={2.2} fill="currentColor" />
+                  <span className="timer-command-copy">{timerRunning ? "Pause session" : "Start session"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="timer-command-button timer-command-button-stop"
+                  onClick={pauseTimer}
+                  disabled={!timerRunning}
+                  aria-label="Pause timer"
+                >
+                  <Pause aria-hidden="true" size={24} strokeWidth={2.4} />
+                  <span className="timer-command-copy">Pause</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
-
-        <div className="timer-task-picker-block">
-          {timerMode === "rest" ? (
-            <div className="timer-task-picker timer-task-picker-readonly">
-              <CircleDot aria-hidden="true" size={18} strokeWidth={2.2} />
-              <span>Break time</span>
-            </div>
-          ) : (
-            <GlassSelect
-              value={activeTaskId ?? ""}
-              onValueChange={selectTask}
-              disabled={focusableTasks.length === 0}
-            >
-              <GlassSelectTrigger
-                id={compact ? "timer-task-compact" : "timer-task-full"}
-                className={cn(
-                  "timer-task-picker",
-                  compact && "timer-task-picker-compact",
-                )}
-                aria-label="Choose task"
-              >
-                <div className="timer-task-picker-value">
-                  <ListTodo aria-hidden="true" size={18} strokeWidth={2.1} />
-                  <GlassSelectValue placeholder={focusableTasks.length > 0 ? "Choose a task" : "Create a task to begin"} />
-                </div>
-              </GlassSelectTrigger>
-              <GlassSelectContent className="timer-task-picker-menu">
-                {focusableTasks.map((task) => (
-                  <GlassSelectItem key={task.id} value={task.id} className="timer-task-picker-item">
-                    {task.text}
-                  </GlassSelectItem>
-                ))}
-              </GlassSelectContent>
-            </GlassSelect>
-          )}
-        </div>
-
-        <div className="timer-command-row" aria-label="Timer controls">
-          <button type="button" className="timer-command-button" onClick={resetTimer} aria-label="Reset timer">
-            <RotateCcw aria-hidden="true" size={24} strokeWidth={2.2} />
-          </button>
-          <button
-            type="button"
-            className="timer-command-button timer-command-button-primary"
-            onClick={handleTimerButtonClick}
-            disabled={!timerRunning && (!canRunTimer || timerSeconds === 0)}
-            aria-label="Start timer"
-          >
-            <Play aria-hidden="true" size={28} strokeWidth={2.2} fill="currentColor" />
-          </button>
-          <button
-            type="button"
-            className="timer-command-button timer-command-button-stop"
-            onClick={pauseTimer}
-            disabled={!timerRunning}
-            aria-label="Pause timer"
-          >
-            <Pause aria-hidden="true" size={24} strokeWidth={2.4} />
-          </button>
-        </div>
-        {!compact ? (
-          <div className="timer-overall-block" aria-label="AI summary">
-            <div className="timer-overall-story">
-              <strong>{overallNextStep}</strong>
-              <span>{overallStory}</span>
-            </div>
-            <div className="timer-overall-bubbles">
-              {overallInsights.slice(0, 3).map((insight) => (
-                <article
-                  key={insight.id}
-                  className={cn("timer-overall-bubble", `timer-overall-bubble-${insight.tone}`)}
-                >
-                  <span>{insight.title}</span>
-                  <p>{insight.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        ) : null}
 
       </section>
     );
@@ -1885,60 +1947,7 @@ export default function App() {
       className: "panel-small app-intro-bottom",
       content: (
         <section className="panel" aria-labelledby="timer-title">
-          <div className="panel-header">
-            <h1 id="timer-title">Timer</h1>
-          </div>
-          <div className="timer-card" aria-live="polite">
-            <div className="timer-progress">
-              <AnimatedCircularProgressBar
-                max={timerDuration}
-                min={0}
-                value={timerProgress}
-                gaugePrimaryColor={timerMode === "rest" ? "#9ee8ff" : "#5f8bff"}
-                gaugeSecondaryColor="transparent"
-                className="timer-progress-ring"
-              />
-              <div className="timer-status">{timerMode === "rest" ? "BREAK TIME" : "FOCUS TIME"}</div>
-              <div className="timer-display">{formatTimer(timerSeconds)}</div>
-            </div>
-            <div className="timer-task">
-              {timerMode === "rest" ? (
-                <strong className="timer-rest-label">Rest</strong>
-              ) : (
-                <GlassSelect
-                  value={activeTaskId ?? ""}
-                  onValueChange={selectTask}
-                  disabled={focusableTasks.length === 0}
-                >
-                  <GlassSelectTrigger
-                    className="timer-task-select h-6 rounded-lg px-2 py-0.5 text-[10px]"
-                    aria-label="Choose task"
-                  >
-                    <GlassSelectValue placeholder="Choose a task" />
-                  </GlassSelectTrigger>
-                  <GlassSelectContent className="max-h-36 rounded-lg">
-                    {focusableTasks.map((task) => (
-                      <GlassSelectItem key={task.id} value={task.id} className="py-0.5 pl-7 text-[10px]">
-                        {task.text}
-                      </GlassSelectItem>
-                    ))}
-                  </GlassSelectContent>
-                </GlassSelect>
-              )}
-            </div>
-            <div className="timer-actions">
-              <button
-                type="button"
-                onClick={handleTimerButtonClick}
-                disabled={!canRunTimer || timerSeconds === 0}
-              >
-                {timerRunning ? "Pause" : "Start"}
-              </button>
-              <button type="button" onClick={resetTimer}>
-                Reset
-              </button>
-            </div>
-          </div>
+          <div aria-live="polite">{renderTimerExperience({ compact: true })}</div>
         </section>
       ),
     },
@@ -2651,14 +2660,14 @@ export default function App() {
               </article>
               <article className="ai-generator-stat">
                 <span>Provider</span>
-                <strong>Codex</strong>
+                <strong>Google AI</strong>
               </article>
             </div>
             <div className="ai-generator-grid">
               <section className="panel ai-generator-panel" aria-labelledby="ai-generator-title">
                 <div className="panel-header">
                   <h2 id="ai-generator-title">Prompt Builder</h2>
-                  <div className="analytics-summary-label">Creates session + tasks via Codex</div>
+                  <div className="analytics-summary-label">Creates session + tasks via Google AI</div>
                 </div>
                 <div className="ai-generator-form">
                   <label className="ai-generator-label" htmlFor="ai-generator-input">

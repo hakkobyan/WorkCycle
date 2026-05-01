@@ -3,5 +3,5 @@ node_modules
 .env.*
 vite-ai-generator.log
 vite-ai-generator.err.log
-codex-api.log
-codex-api.err.log
+google-ai-api.log
+google-ai-api.err.log

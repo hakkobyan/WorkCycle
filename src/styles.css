@@ -4698,11 +4698,28 @@ label,
 
 .timer-experience {
   display: grid;
-  justify-items: center;
+  justify-items: stretch;
+  align-content: start;
+  gap: 0.35rem;
+  width: min(100%, 92rem);
+  margin: 0 auto;
+}
+
+.timer-layout {
+  display: grid;
+  grid-template-columns: minmax(26rem, 1fr) minmax(28rem, 36rem);
+  align-items: start;
+  justify-content: space-between;
+  gap: 4rem;
+  width: 100%;
+}
+
+.timer-info-pane {
+  display: grid;
   align-content: start;
   gap: 1rem;
-  width: min(100%, 34rem);
-  margin: 0 auto;
+  width: 100%;
+  justify-self: start;
 }
 
 .timer-page-top {
@@ -4740,7 +4757,7 @@ label,
 .timer-task-picker-block {
   display: grid;
   gap: 0.55rem;
-  width: min(100%, 16rem);
+  width: min(100%, 10.5rem);
 }
 
 .timer-task-picker-label {
@@ -4752,19 +4769,18 @@ label,
 
 .timer-task-picker,
 .timer-task-picker-readonly {
-  display: flex;
+  display: grid;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.85rem;
-  min-height: 4rem !important;
+  gap: 0.35rem;
+  min-height: 3.35rem !important;
   width: 100%;
-  padding: 0 1rem !important;
-  border: 1px solid rgb(162 174 255 / 0.18) !important;
-  border-radius: 1.15rem !important;
-  background: linear-gradient(180deg, rgb(23 24 34 / 0.92), rgb(15 16 24 / 0.95)) !important;
+  padding: 0.45rem 0.62rem !important;
+  border: 1px solid rgb(255 255 255 / 0.12) !important;
+  border-radius: 0.8rem !important;
+  background: linear-gradient(180deg, rgb(18 19 27 / 0.98), rgb(11 12 18 / 0.98)) !important;
   box-shadow:
-    0 20px 60px rgb(0 0 0 / 0.24),
-    inset 0 1px 0 rgb(255 255 255 / 0.05);
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 12px 24px rgb(0 0 0 / 0.14);
   color: #ffffff !important;
 }
 
@@ -4772,16 +4788,42 @@ label,
   color: rgb(255 255 255 / 0.44) !important;
 }
 
+.timer-task-picker-copy {
+  display: grid;
+  gap: 0.38rem;
+  width: 100%;
+}
+
+.timer-task-picker-topline {
+  color: rgb(255 255 255 / 0.36);
+  font-size: 0.44rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.timer-task-picker-body,
 .timer-task-picker-value,
 .timer-task-picker-readonly {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.timer-task-picker-value,
+.timer-task-picker-body {
+  justify-content: flex-start;
+}
+
+.timer-task-picker-value {
+  font-size: 0.74rem;
 }
 
 .timer-task-picker-value svg,
-.timer-task-picker-readonly svg {
-  color: #8a8cff;
+.timer-task-picker-readonly svg,
+.timer-task-picker-body svg {
+  color: #7f88ff;
 }
 
 .timer-task-picker-menu {
@@ -4797,80 +4839,166 @@ label,
 .timer-task-picker-compact,
 .timer-experience-compact .timer-task-picker,
 .timer-experience-compact .timer-task-picker-readonly {
-  min-height: 3.2rem !important;
-  padding: 0 0.9rem !important;
+  min-height: 3.55rem !important;
+  padding: 0.55rem 0.8rem !important;
   border-radius: 0.9rem !important;
 }
 
 .timer-hero {
   display: grid;
   place-items: center;
+  align-content: start;
+  gap: 0.8rem;
   width: 100%;
 }
 
-.timer-hero-ring {
+.timer-dial-shell {
+  display: grid;
+  justify-items: center;
+  gap: 1.35rem;
+  width: 100%;
+}
+
+.timer-dial {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 23rem);
+  width: min(100%, 19rem);
   aspect-ratio: 1;
 }
 
-.timer-hero-ring::before {
-  content: "";
+.timer-dial-ticks,
+.timer-progress-arc {
   position: absolute;
-  inset: 11%;
+  inset: 0;
+}
+
+.timer-dial-tick-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 0.35rem;
+}
+
+.timer-dial-tick {
+  width: 1.7px;
   border-radius: 999px;
-  background:
-    radial-gradient(circle at center, rgb(9 11 20 / 0.12), rgb(7 8 16 / 0.5) 58%, rgb(6 7 14 / 0.82) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.04),
-    0 0 70px rgb(66 88 255 / 0.08);
+  background: rgb(255 255 255 / 0.34);
 }
 
-.timer-hero-progress {
-  width: 100% !important;
-  height: 100% !important;
-  filter: drop-shadow(0 0 26px rgb(122 127 255 / 0.16));
+.timer-dial-tick.is-major {
+  width: 2.2px;
+  height: 19px;
+  background: rgb(255 255 255 / 0.7);
 }
 
-.timer-hero-progress [data-current-value] {
-  display: none;
+.timer-dial-tick.is-medium {
+  width: 1.9px;
+  height: 12px;
+  background: rgb(255 255 255 / 0.52);
 }
 
-.timer-hero-inner {
+.timer-dial-tick.is-minor {
+  height: 7px;
+}
+
+.timer-dial-center-dot {
   position: absolute;
-  inset: 19%;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 0 16px rgb(255 255 255 / 0.14);
+}
+
+.timer-progress-arc {
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+
+.timer-progress-arc-line {
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgb(90 120 255 / 0.24));
+}
+
+.timer-hero-readout {
   display: grid;
-  align-content: center;
   justify-items: center;
-  gap: 0.75rem;
+  gap: 0.35rem;
   text-align: center;
-  z-index: 2;
+}
+
+.timer-hero-controls {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  width: 100%;
 }
 
 .timer-hero-display {
   color: #ffffff;
-  font-size: clamp(3.2rem, 8vw, 5.4rem);
-  font-weight: 600;
-  letter-spacing: -0.08em;
-  line-height: 0.94;
-  text-shadow: 0 10px 40px rgb(0 0 0 / 0.28);
+  font-size: clamp(3.35rem, 8vw, 5rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 14px 40px rgb(0 0 0 / 0.32);
+}
+
+.timer-range-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 999px;
+  background: rgb(14 16 23 / 0.9);
+  color: rgb(255 255 255 / 0.48);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.03),
+    0 10px 28px rgb(0 0 0 / 0.18);
+}
+
+.timer-range-pill svg {
+  color: rgb(255 255 255 / 0.32);
+}
+
+.timer-range-pill-in-dial {
+  position: absolute;
+  left: 50%;
+  top: 64%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.timer-mode-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .timer-mode-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  min-height: 2.5rem;
-  padding: 0 0.85rem;
-  border: 1px solid rgb(133 141 255 / 0.24);
+  min-height: 2.35rem;
+  padding: 0 0.8rem;
+  border: 1px solid rgb(133 141 255 / 0.16);
   border-radius: 999px;
-  background: rgb(15 17 28 / 0.72);
+  background: rgb(13 16 24 / 0.78);
   color: #8e92ff;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.03),
+    0 10px 28px rgb(0 0 0 / 0.12);
 }
 
 .timer-mode-pill.is-rest {
@@ -4880,11 +5008,10 @@ label,
 
 .timer-command-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: minmax(0, 4.8rem) minmax(0, 1fr) minmax(0, 4.8rem);
+  gap: 0.6rem;
   width: min(100%, 23rem);
-  justify-content: center;
-  justify-items: center;
+  justify-items: stretch;
   margin: 0 auto;
 }
 
@@ -4892,15 +5019,13 @@ label,
   display: grid;
   justify-items: center;
   align-items: center;
-  gap: 0.55rem;
-  width: 3.5rem;
-  height: 3.5rem;
-  min-width: 3.5rem;
-  min-height: 3.5rem;
-  padding: 0;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  border-radius: 999px;
-  background: #1d1f26;
+  gap: 0.34rem;
+  width: 100%;
+  min-height: 4rem;
+  padding: 0.55rem 0.4rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 0.7rem;
+  background: #11141a;
   color: #e7e9f5;
   text-align: center;
   transition:
@@ -4911,7 +5036,7 @@ label,
 }
 
 .timer-command-button svg {
-  transform: translateY(2px);
+  transform: none;
 }
 
 .timer-command-button:hover:not(:disabled) {
@@ -4924,30 +5049,20 @@ label,
 }
 
 .timer-command-button-primary {
-  background: #5a78ff;
+  background: linear-gradient(180deg, #5d82ff, #4470ff);
   color: #ffffff;
 }
 
 .timer-command-button-stop {
-  color: #ff9ba8;
+  color: #c6ccdb;
 }
 
 .timer-command-copy {
-  display: none;
-}
-
-.timer-command-copy strong {
-  font-size: 0.98rem;
-  font-weight: 600;
-}
-
-.timer-command-copy small {
-  color: rgb(255 255 255 / 0.62);
-  font-size: 0.72rem;
-}
-
-.timer-command-button-primary .timer-command-copy small {
-  color: rgb(255 255 255 / 0.86);
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .timer-empty-hint {
@@ -4980,6 +5095,15 @@ label,
   width: 100%;
 }
 
+.timer-experience-compact .timer-layout {
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.timer-experience-compact .timer-info-pane {
+  order: 2;
+}
+
 .timer-experience-compact .timer-page-top {
   display: none;
 }
@@ -4995,23 +5119,56 @@ label,
   text-transform: uppercase;
 }
 
-.timer-experience-compact .timer-hero-ring {
-  width: min(100%, 12rem);
+.timer-experience-compact .timer-dial-shell {
+  gap: 0.95rem;
 }
 
-.timer-experience-compact .timer-hero-inner {
-  inset: 18%;
-  gap: 0.6rem;
+.timer-experience-compact .timer-hero {
+  gap: 0.65rem;
+}
+
+.timer-experience-compact .timer-hero-controls {
+  gap: 0.55rem;
+}
+
+.timer-experience-compact .timer-dial {
+  width: min(100%, 11.5rem);
+}
+
+.timer-experience-compact .timer-dial-tick-track {
+  padding-top: 0.2rem;
+}
+
+.timer-experience-compact .timer-dial-tick.is-major {
+  height: 12px;
+}
+
+.timer-experience-compact .timer-dial-tick.is-medium {
+  height: 8px;
+}
+
+.timer-experience-compact .timer-dial-tick.is-minor {
+  height: 5px;
 }
 
 .timer-experience-compact .timer-hero-display {
-  font-size: clamp(2.2rem, 5vw, 3.25rem);
+  font-size: clamp(2.15rem, 5vw, 3rem);
+}
+
+.timer-experience-compact .timer-range-pill {
+  min-height: 1.8rem;
+  padding: 0 0.65rem;
+  font-size: 0.72rem;
+}
+
+.timer-experience-compact .timer-range-pill-in-dial {
+  top: 66%;
 }
 
 .timer-experience-compact .timer-mode-pill {
-  min-height: 2rem;
-  padding: 0 0.7rem;
-  font-size: 0.82rem;
+  min-height: 1.95rem;
+  padding: 0 0.65rem;
+  font-size: 0.78rem;
 }
 
 .timer-experience-compact .timer-command-row {
@@ -5752,7 +5909,7 @@ label,
   display: grid;
   gap: 0.7rem;
   width: 100%;
-  margin-top: 0.35rem;
+  margin-top: 0;
 }
 
 .timer-overall-story {
@@ -5804,6 +5961,125 @@ label,
   color: #f7f8fb;
   font-size: 0.78rem;
   line-height: 1.55;
+}
+
+@media (min-width: 1400px) {
+  .timer-view {
+    padding-top: 0;
+  }
+
+  .timer-experience {
+    gap: 1.6rem;
+  }
+
+  .timer-info-pane {
+    max-width: 42rem;
+  }
+
+  .timer-dial {
+    width: min(100%, 25rem);
+  }
+
+  .timer-task-picker-block {
+    width: min(100%, 22rem);
+  }
+
+  .timer-command-row {
+    width: min(100%, 33rem);
+    grid-template-columns: minmax(0, 6.7rem) minmax(0, 1fr) minmax(0, 6.7rem);
+    gap: 0.9rem;
+  }
+
+  .timer-hero {
+    justify-self: end;
+    gap: 1rem;
+  }
+
+  .timer-command-button {
+    min-height: 4.9rem;
+    padding: 0.72rem 0.55rem;
+  }
+
+  .timer-command-button svg {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .timer-command-button-primary svg {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .timer-command-copy {
+    font-size: 0.72rem;
+  }
+
+  .timer-overall-block {
+    gap: 1rem;
+    margin-top: 0.1rem;
+  }
+
+  .timer-overall-story {
+    gap: 0.5rem;
+    padding: 1.15rem 1.3rem;
+    border-radius: 1.2rem;
+  }
+
+  .timer-overall-story strong {
+    font-size: 1.08rem;
+  }
+
+  .timer-overall-story span {
+    font-size: 0.92rem;
+  }
+
+  .timer-overall-bubbles {
+    gap: 0.9rem;
+  }
+
+  .timer-overall-bubble {
+    gap: 0.42rem;
+    padding: 1.05rem 1.2rem;
+    border-radius: 1.2rem;
+  }
+
+  .timer-overall-bubble span {
+    font-size: 0.8rem;
+  }
+
+  .timer-overall-bubble p {
+    font-size: 0.92rem;
+  }
+
+  .timer-hero-display {
+    font-size: clamp(4.1rem, 7vw, 5.8rem);
+  }
+
+  .timer-mode-pill {
+    min-height: 2.8rem;
+    padding: 0 1rem;
+    font-size: 1rem;
+  }
+
+  .timer-task-picker,
+  .timer-task-picker-readonly {
+    min-height: 5.4rem !important;
+    padding: 0.85rem 1.15rem !important;
+  }
+
+  .timer-task-picker-topline {
+    font-size: 0.65rem;
+  }
+
+  .timer-task-picker-value {
+    font-size: 1.08rem;
+  }
+
+  .timer-range-pill {
+    min-height: 2.25rem;
+    padding: 0 0.95rem;
+    font-size: 0.95rem;
+  }
 }
 
 .overall-bubbles {
@@ -6425,6 +6701,15 @@ label,
 }
 
 @media (max-width: 860px) {
+  .timer-layout {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .timer-info-pane {
+    order: 2;
+  }
+
   .board-row {
     flex-direction: column;
   }
@@ -6449,8 +6734,8 @@ label,
     width: 100%;
   }
 
-  .timer-hero-ring {
-    width: min(100%, 25rem);
+  .timer-dial {
+    width: min(100%, 20rem);
   }
 
   .timer-command-button {
@@ -6605,7 +6890,7 @@ label,
   }
 
   .timer-hero-display {
-    font-size: clamp(3.3rem, 15vw, 5.5rem);
+    font-size: clamp(3rem, 15vw, 4.55rem);
   }
 
   .timer-page-heading h2 {
@@ -6618,12 +6903,8 @@ label,
     padding: 0 1rem !important;
   }
 
-  .timer-hero-ring {
-    width: min(100%, 20rem);
-  }
-
-  .timer-hero-inner {
-    inset: 18%;
+  .timer-dial {
+    width: min(100%, 16.5rem);
   }
 
   .timer-command-row {
@@ -6697,5 +6978,104 @@ label,
     padding-left: 1.1rem;
     padding-right: 1.1rem;
     overflow-y: visible;
+  }
+}
+
+@media (max-height: 800px) and (min-width: 1081px) {
+  .timer-layout {
+    gap: 2.4rem;
+  }
+
+  .timer-dial {
+    width: min(100%, 18rem);
+  }
+
+  .timer-hero {
+    gap: 0.6rem;
+  }
+
+  .timer-hero-display {
+    font-size: clamp(3rem, 6vw, 4.2rem);
+  }
+
+  .timer-task-picker-block {
+    width: min(100%, 14.5rem);
+  }
+
+  .timer-task-picker,
+  .timer-task-picker-readonly {
+    min-height: 4.2rem !important;
+    padding: 0.62rem 0.88rem !important;
+  }
+
+  .timer-task-picker-topline {
+    font-size: 0.54rem;
+  }
+
+  .timer-task-picker-value {
+    font-size: 0.94rem;
+  }
+
+  .timer-command-row {
+    width: min(100%, 25rem);
+    grid-template-columns: minmax(0, 5.2rem) minmax(0, 1fr) minmax(0, 5.2rem);
+    gap: 0.58rem;
+  }
+
+  .timer-command-button {
+    min-height: 3.85rem;
+    padding: 0.48rem 0.34rem;
+  }
+
+  .timer-command-button svg {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+
+  .timer-command-button-primary svg {
+    width: 1.55rem;
+    height: 1.55rem;
+  }
+
+  .timer-command-copy {
+    font-size: 0.57rem;
+  }
+
+  .timer-overall-block {
+    gap: 0.62rem;
+  }
+
+  .timer-overall-story {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .timer-overall-story strong {
+    font-size: 0.82rem;
+  }
+
+  .timer-overall-story span {
+    font-size: 0.73rem;
+  }
+
+  .timer-overall-bubbles {
+    gap: 0.6rem;
+  }
+
+  .timer-overall-bubble {
+    padding: 0.72rem 0.88rem;
+  }
+
+  .timer-overall-bubble span {
+    font-size: 0.66rem;
+  }
+
+  .timer-overall-bubble p {
+    font-size: 0.74rem;
+  }
+}
+
+@media (min-height: 801px) and (min-width: 1081px) {
+  .timer-info-pane {
+    transform: translateX(-5rem);
   }
 }

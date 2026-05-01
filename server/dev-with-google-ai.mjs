@@ -16,7 +16,7 @@ function startProcess(command, args, label) {
   return child;
 }
 
-const apiProcess = startProcess("npm", ["run", "dev:codex-api"], "Codex API");
+const apiProcess = startProcess("npm", ["run", "dev:google-ai"], "Google AI API");
 const viteProcess = startProcess(
   "npm",
   ["run", "dev:ui", "--", "--host", "127.0.0.1", "--port", "4173"],

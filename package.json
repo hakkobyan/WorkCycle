@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server/dev-with-codex.mjs",
+    "dev": "node server/dev-with-google-ai.mjs",
     "dev:ui": "vite",
-    "dev:codex-api": "node server/codex-api.mjs",
+    "dev:google-ai": "node --env-file=.env server/google-ai-api.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

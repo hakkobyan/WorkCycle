@@ -6,6 +6,7 @@ interface AnimatedCircularProgressBarProps {
   value: number
   gaugePrimaryColor: string
   gaugeSecondaryColor: string
+  strokeWidth?: number
   className?: string
 }
 
@@ -15,6 +16,7 @@ export function AnimatedCircularProgressBar({
   value = 0,
   gaugePrimaryColor,
   gaugeSecondaryColor,
+  strokeWidth = 10,
   className,
 }: AnimatedCircularProgressBarProps) {
   const circumference = 2 * Math.PI * 45
@@ -50,7 +52,7 @@ export function AnimatedCircularProgressBar({
             cx="50"
             cy="50"
             r="45"
-            strokeWidth="10"
+            strokeWidth={strokeWidth}
             strokeDashoffset="0"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -75,7 +77,7 @@ export function AnimatedCircularProgressBar({
           cx="50"
           cy="50"
           r="45"
-          strokeWidth="10"
+          strokeWidth={strokeWidth}
           strokeDashoffset="0"
           strokeLinecap="round"
           strokeLinejoin="round"

@@ -62,22 +62,28 @@ The goal is simple:
 
 The `AI GENERATOR` page can turn a goal like `Create Landing website` into:
 
-- a new Codex-generated session name
+- a new Google AI generated session name
 - a matching task list added to that session
 
 ### Local setup
 
-1. Make sure the local `codex` CLI is installed and logged in
-2. Run `npm run dev`
-3. Open the app and use the `AI GENERATOR` page
+1. Create a Google AI API key
+2. Create a local `.env` file in the project root
+3. Add one of these variables to that file:
+   - `GOOGLE_API_KEY`, or
+   - `GEMINI_API_KEY`, or
+   - `GOOGLE_AI_API_KEY`
+3. Optionally set `GOOGLE_AI_MODEL` if you want a model other than `gemini-2.5-flash`
+4. Run `npm run dev`
+5. Open the app and use the `AI GENERATOR` page
 
 ### How it works
 
 The website calls a local API server at `/api/generate-plan`.
-That server runs `codex exec` with a JSON schema and returns:
+That server calls the Google Gemini API with a JSON schema and returns:
 
 - a short session name
 - an ordered task list
 - the intended outcome
 
-No OpenAI API key is needed in the frontend for this mode.
+The API key stays in the local Node server and is not stored in the frontend bundle.
