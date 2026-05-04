@@ -6996,17 +6996,36 @@ label,
   }
 
   .dashboard-sidebar-panel {
-    display: none;
+    display: grid;
     gap: 0.65rem;
-    margin-top: 0.9rem;
-    padding: 0.85rem;
+    max-height: 0;
+    margin-top: 0;
+    padding: 0 0.85rem;
     border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: 1rem;
     background: rgb(15 16 20 / 0.94);
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transform: translateY(-0.45rem);
+    transform-origin: top center;
+    transition:
+      max-height 280ms ease,
+      margin-top 220ms ease,
+      padding-top 220ms ease,
+      padding-bottom 220ms ease,
+      opacity 200ms ease,
+      transform 240ms ease;
   }
 
   .dashboard-sidebar.is-nav-open .dashboard-sidebar-panel {
-    display: grid;
+    max-height: 32rem;
+    margin-top: 0.9rem;
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
   }
 
   .dashboard-menu-settings {

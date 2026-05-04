@@ -2327,6 +2327,20 @@ export default function App() {
             </div>
             <div className="menu-title">WorkCycle</div>
           </div>
+          <button
+            type="button"
+            className="dashboard-menu-toggle"
+            aria-label={navMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={navMenuOpen}
+            aria-controls="dashboard-navigation"
+            onClick={() => setNavMenuOpen((currentValue) => !currentValue)}
+          >
+            {navMenuOpen ? (
+              <X aria-hidden="true" size={18} strokeWidth={2.4} />
+            ) : (
+              <Menu aria-hidden="true" size={18} strokeWidth={2.4} />
+            )}
+          </button>
         </div>
         <div className="dashboard-sidebar-panel">
           <nav id="dashboard-navigation" className="dashboard-nav">
